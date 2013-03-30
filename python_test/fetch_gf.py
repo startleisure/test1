@@ -1,14 +1,30 @@
 #!/usr/bin/python
 
+### fetch google finance historical data ## 
+### author: Ken Lin ###
+## example:
+##
 import httplib
 import urllib2
 import re
 
-print 'Hello World',1000
+print 'Hello World'
 
 def debug_print( s, msg = None):
 	print "DEBUG", msg, s
 	pass
+
+#  get url 
+#  https://www.google.com/finance/historical?q=TPE:2330&startdate=1/31/1986&start=30&num=30
+def get_site( stkID = 2330, month = 1, day = 1, year = 1985, start = 0, num = 30):
+	return 'https://www.google.com/finance/historical?q=TPE:' + \
+				str( stkID ) + '&startdate=' + \
+				str(day) + '/' + str(month) + '/' + str(year) + \
+				'&start=' + str(start) + '&num=' + str(num)
+
+#debug_print(get_site(2485, 1, 31, 1986, 0, 200))
+#debug_print(get_site())
+
 
 httplib.HTTPConnection.debuglevel = 1
 stock_ids = ( 2485, 2330)
@@ -28,6 +44,8 @@ iRE_price = re.compile( r".*nowrap><b>([\d.]+)<.*", \
 e = ".*>\d+" + r'(.+)</a><br><a href="/pf/pfsel\?stocklist=.*'
 debug_print( e, "for name" )
 iRE_name = re.compile( e, re.I | re.U | re.M | re.S )
+
+
 
 for stock_id in stock_ids:
     # Get web page content
