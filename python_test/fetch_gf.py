@@ -1,20 +1,11 @@
 #!/usr/bin/python
 
 ### fetch google finance historical data ## 
-### author: Ken Lin ###
-## example:
-##
+
 import httplib
 import urllib2
 import re
 
-stock_ids = ( 1111, 2485, 2330, 0)
-
-print 'Hello World'
-def displaymatch(match):
-    if match is None:
-        return None
-    return '<Match: %r, groups=%r>' % (match.group(), match.groups())
 
 def debug_print( s, msg = None):
 	print "DEBUG", msg, s
@@ -27,18 +18,11 @@ def get_site( stkID = 2330, month = 1, day = 1, year = 1985, start = 0, num = 30
 				str( stkID ) + '&startdate=' + \
 				str(day) + '/' + str(month) + '/' + str(year) + \
 				'&start=' + str(start) + '&num=' + str(num)
-
+# testing
 #debug_print(get_site(2485, 1, 31, 1986, 0, 200))
 #debug_print(get_site())
 
-
-httplib.HTTPConnection.debuglevel = 1
-#stock_ids = ( 2485, 2324, 8078, 2311, 2330, 2891, 8926)
-
-opener = urllib2.build_opener()
-opener.addheaders = [('User-agent', 'Mozilla/5.0')]
-
-
+# target source:
 # date, open, high, low, close, volume
 #<td class="lm">Jun 8, 2012
 #<td class="rgt">77.00
@@ -53,42 +37,73 @@ pattern = r'<td class="lm">(.+)' +  \
            '\s<td class="rgt">([\d\.]+)' + \
            '\s<td class="rgt">([\d\.]+)' + \
            '\s<td class="rgt rm">([\d\,]+)'
+reg_price = re.compile( pattern )
 
-reg_price = re.compile( pattern)
+pattern_total_size = r'google\.finance\.applyPagination\(\s+\d+,\s+\d+,\s+(\d+),\s+'
+reg_row_size =  re.compile( pattern_total_size )
 
-
-
-for stock_id in stock_ids:
+def write_fetch_data(fileName, stock_id = 0):
+    f = open( fileName, 'a')
+    if stock_id < 1000 :
+        return None
     # Get web page content
-    urlsite = get_site(stock_id, 1, 31, 1986, 0, 30)
-    debug_print(urlsite)
+    urlsite = get_site(stock_id, 1, 31, 1986, 0, 200)
     content = opener.open( urlsite ).read()
-    f = open( str(stock_id)+'.log', 'w')
-    stock_data = reg_price.findall( content )
-    length = len(stock_data)
-    if (length is 0 ):
+
+    match_r_sz = reg_row_size.search( content )
+    if (match_r_sz is None):
         print "stock_id: "+ str(stock_id) + " not found! "
-        continue
+        return None
+
+    ## write ID SZ line
+    row_size = int (match_r_sz.groups()[0])
+    id_line = "ID:" + str(stock_id) + " SZ: " + str(row_size)
+    print id_line
+    f.write(id_line)
+    f.write('\n')
     
-    print length 
-    for i in range(length):
-        print str(stock_data[i])
-        f.write(str(stock_data[i]))
-        f.write("\n")
+    ## page number , 200rows/page
+    page_num = row_size/200 + 1;
+    print "pages: " + str(page_num)
+    page_range = range(page_num)
+
+    for i in page_range:
+        start_pos = i*200
+        site = get_site(stock_id, 1, 31, 1986, start_pos, start_pos+200)
+        print "Process page:" + str(i) + " " + site
+        cnt = opener.open( site ).read()
+        stock_data = reg_price.findall( cnt )
+        length = len(stock_data)
+        if (length is 0 ):
+            print "stock_id: "+ str(stock_id) + " not found! "
+            return None
+        else:
+            print length
+            f.write('*LEN: ' + str(length))
+            f.write("\n")
+
+            for i in range(length):
+                f.write(str(stock_data[i]))
+                f.write("\n")
+        
+    
+
+#### Main ####
+fileName = 'stock.data'
+f = open(fileName, 'w')
+f.close()  ## rewrite data
+httplib.HTTPConnection.debuglevel = 1
+opener = urllib2.build_opener()
+opener.addheaders = [('User-agent', 'Mozilla/5.0')]
+
+#stock_ids = range(9999)
+stock_ids = (1111, 2330, 2485)
+
+print 'Start Fetch!'
+for stock_id in stock_ids:  # fetch all
+
+    write_fetch_data(fileName, stock_id)
 
     print "here"
 
-    #f.write(stock_data)
-    # Print the whole content for debugging
-    #print content
-    
-    #stock_name =  unicode( iRE_name.match( content ).groups()[ 0 ], "BIG5" )
-    
-    # Print result
-    #print "%d\t%.2f" % ( int( stock_id ), \
-    #                         float( stock_price ) )
-    #print "%d\t%s\t%.2f" % ( int( stock_id ), stock_name, \
-    #                         float( stock_price ) )
-
-#raw_input( "Press any key..." )
 
