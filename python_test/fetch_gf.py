@@ -96,8 +96,8 @@ httplib.HTTPConnection.debuglevel = 1
 opener = urllib2.build_opener()
 opener.addheaders = [('User-agent', 'Mozilla/5.0')]
 
-#stock_ids = range(9999)
-stock_ids = (1111, 2330, 2485)
+stock_ids = range(9999)
+#stock_ids = (1111, 2330, 2485)
 
 print 'Start Fetch!'
 for stock_id in stock_ids:  # fetch all
