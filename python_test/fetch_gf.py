@@ -57,7 +57,7 @@ def write_fetch_data(fileName, stock_id = 0):
 
     ## write ID SZ line
     row_size = int (match_r_sz.groups()[0])
-    id_line = "*ID " + str(stock_id) + " *SZ " + str(row_size)
+    id_line = "*ID " + str(stock_id) + " *SZ " + str(row_size) + "\n"
     print id_line
     f.write(id_line)
     
@@ -78,8 +78,8 @@ def write_fetch_data(fileName, stock_id = 0):
             return None
         else:
             print length
-            f.write(' *LEN ' + str(length))
-            f.write("\n")
+            #f.write(' *LEN ' + str(length))
+            #f.write("\n")
 
             for i in range(length):
                 f.write(str(stock_data[i]))
@@ -103,6 +103,6 @@ for stock_id in stock_ids:  # fetch all
 
     write_fetch_data(fileName, stock_id)
 
-    print "here"
+    #print "here"
 
 
