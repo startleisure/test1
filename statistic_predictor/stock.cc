@@ -6,13 +6,13 @@
 
 
 namespace stock {
-	enum data_state { NORMAL, ID, SZ, DATE0, DATE1, DATE2 , OPEN, HIGH, LOW, CLOSE, VOL};
+	enum data_state { NORMAL, ID, SZ, DATE, VALUE, OPEN, HIGH, LOW, CLOSE, VOLUME};
 }
 using namespace stock;
 
 void stock_t::get_token(ifstream &ifs) {
 	ifs >> token;  // get one token
-	cout << "TOKEN: <" << token << " >" << endl; // debug print
+	//cout << "TOKEN: <" << token << " >" << endl; // debug print
 }
 
 void stock_t::parse_stock_data_from_file(ifstream &ifs) {
@@ -20,63 +20,46 @@ void stock_t::parse_stock_data_from_file(ifstream &ifs) {
 	int id = 0, sz = 0, date;
 
     while (ifs.good()) {
-		get_token(ifs);
 		
 		switch(state) {
 			case NORMAL:
+				get_token(ifs);
 				if (token.compare("*ID") == 0) {
 					state = ID;
 				} else if (token.compare("*SZ") == 0) {
 					state = SZ;
 				} else {
-					state = DATE0;
+					state = DATE;
 				}
 				break;
 			case ID:
+				get_token(ifs);
 				id = atoi(token.c_str());
-				cout << "set ID = " << id << endl;
+				//cout << "set ID = " << id << endl;
 				state = NORMAL;
-
 				break; 
 			case SZ:
+				get_token(ifs);
 				sz = atoi(token.c_str());
-				cout << "set SZ = " << sz << endl;
-				state = DATE0;
-
-				break;
-			case DATE0:
-				parse_date(ifs, date);
-				state = OPEN;
-				
-				break;
-			case OPEN:
-				state = HIGH;
-
-				break;
-			case HIGH:
-				state = LOW;
-
-				break;
-			case LOW:
-				state = CLOSE;
-
-				break;
-			case CLOSE:
-				state = VOL;
-
-				break;
-			case VOL:
+				//cout << "set SZ = " << sz << endl;
 				state = NORMAL;
 
 				break;
+			case DATE:
+				parse_date(ifs, date);
+				state = VALUE;
 				
+				break;
+			case VALUE:
+				parse_value(ifs, data[id][date]);
+				state = NORMAL;
 
-
+				break;
 			default:
 				cout << "ERROR in parse stock data" << endl;
 				break;
 		}
-        if (token.find(")") != string::npos) { break;}
+//        if (token.find(")") != string::npos) { break;}
 
     }
 }
@@ -92,8 +75,6 @@ int mtoi(const string &month) {
 	return 0;
 }
 void stock_t::parse_date(ifstream &ifs, int &date) {
-	data_state state = DATE0;
-
 	int month = 0, day = 0, year = 0;
 	string tmp; 
 
@@ -114,15 +95,82 @@ void stock_t::parse_date(ifstream &ifs, int &date) {
 	year = atoi (tmp.c_str());
 
 	date = year*10000 + month*100 + day;
-	cout << "set DATE = " << date << endl;
+	//cout << "set DATE = " << date << endl;
 	if (month ==0 || day == 0 || year == 0) { 
 		cout << "parse_date error" << endl; 
 		exit(0);
 	}
 }
 
+void stock_t::parse_value(ifstream &ifs, entity_t &entity) {
+	// parse: open high low close volume
+	data_state state = OPEN;
+	string tmp; 
+	int pos =0, pos2, len =0;	
 
+	while (ifs.good() && state != NORMAL) {
+		get_token(ifs);
+		switch(state) {
+			case OPEN:
+				pos = token.find("'")+1;
+				len = token.rfind("'") - pos;
+				tmp = token.substr(pos, len);
+				entity.open = atof(tmp.c_str());
+				state = HIGH;
+				break;
+			case HIGH:
+				pos = token.find("'")+1;
+				len = token.rfind("'") - pos;
+				tmp = token.substr(pos, len);
+				entity.high = atof(tmp.c_str());
+				state = LOW;
+				break;
+			case LOW:
+				pos = token.find("'")+1;
+				len = token.rfind("'") - pos;
+				tmp = token.substr(pos, len);
+				entity.low = atof(tmp.c_str());
+				state = CLOSE;
+				break;
+			case CLOSE:
+				pos = token.find("'")+1;
+				len = token.rfind("'") - pos;
+				tmp = token.substr(pos, len);
+				entity.close = atof(tmp.c_str());
+				state = VOLUME;
+				break;
+			case VOLUME:	
+				pos = token.find("'")+1;
+				len = token.rfind("'") - pos;
+				tmp = token.substr(pos, len);
+				for (string::iterator it = tmp.begin(); it != tmp.end(); ++it) {
+					if (*it == ',') 
+						it = tmp.erase(it);
+				}
+				entity.volume = atoi(tmp.c_str());
+				state = NORMAL;
+			default:
+				break;
+			
+		}
+	}
+	//cout << entity.open <<endl;
+	//cout << entity.high <<endl;
+	//cout << entity.low <<endl;
+	//cout << entity.close <<endl;
+	//cout << entity.volume <<endl;
+}
 
+void stock_t::print_data() {
+	for (data_map::iterator it = data.begin(); it != data.end(); ++it) {
+		cout << "ID " << it->first << endl;
+		entity_map refmap = it ->second;
+		for (entity_map::iterator it = refmap.begin(); it != refmap.end(); ++it) {
+			entity_t e = it->second;
+			cout << it->first << " " << e.open << " " << e.high << " " << e.low << " " << e.close << " " << e.volume << endl;
+		}
+	}
+}
 
 
 

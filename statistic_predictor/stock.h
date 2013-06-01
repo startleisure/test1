@@ -24,14 +24,20 @@ class stock_t {
         double open, high, low, close;
         int volume;
     };
-    typedef map<int, entity_t> stock_data_t; // map int date, entity e 
+	
 
+	void get_token(ifstream &ifs);
     void parse_stock_data_from_file(ifstream &ifs);
 	void parse_date(ifstream &ifs, int &date);
-	void get_token(ifstream &ifs);
+	void parse_value(ifstream &ifs, entity_t &entity);
+	
+	void print_data();
 
   private:
-    map<int , stock_data_t> data; // map stock_id, stock_data 
+    typedef map<int, entity_t> entity_map; // map int date, entity e 
+    typedef map<int , entity_map> data_map; // map stock_id, stock_data 
+
+    data_map data; // map stock_id, stock_data 
 	string token;
 };
 

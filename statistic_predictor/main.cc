@@ -19,5 +19,7 @@ int main(int argc, char *argv[])
     stkobj.parse_stock_data_from_file(ifs);
     ifs.close();
 
+	stkobj.print_data();
+
     return 0;
 }
