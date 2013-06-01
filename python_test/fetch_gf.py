@@ -57,10 +57,9 @@ def write_fetch_data(fileName, stock_id = 0):
 
     ## write ID SZ line
     row_size = int (match_r_sz.groups()[0])
-    id_line = "ID:" + str(stock_id) + " SZ: " + str(row_size)
+    id_line = "*ID " + str(stock_id) + " *SZ " + str(row_size)
     print id_line
     f.write(id_line)
-    f.write('\n')
     
     ## page number , 200rows/page
     page_num = row_size/200 + 1;
@@ -79,7 +78,7 @@ def write_fetch_data(fileName, stock_id = 0):
             return None
         else:
             print length
-            f.write('*LEN: ' + str(length))
+            f.write(' *LEN ' + str(length))
             f.write("\n")
 
             for i in range(length):
