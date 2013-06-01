@@ -23,13 +23,18 @@ class stock_t {
     struct entity_t {
         double open, high, low, close;
         int volume;
+		map<int, double> ma; // ma[30] , ma[72] , ....
+		double hly; // gravity line
     };
 	
 
 	void get_token(ifstream &ifs);
-    void parse_stock_data_from_file(ifstream &ifs);
+    void parse_stock_data_from_file(ifstream &ifs, int target = 0);
 	void parse_date(ifstream &ifs, int &date);
 	void parse_value(ifstream &ifs, entity_t &entity);
+	void compute_gravity_for(int id);
+	void compute_gravity_all();
+	void compute_ma_for(int id, int t);
 	
 	void print_data();
 

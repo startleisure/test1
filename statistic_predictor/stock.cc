@@ -2,11 +2,12 @@
 #include <iostream>
 #include <cstdlib>
 #include <vector>
+#include <queue>
 
 
 
 namespace stock {
-	enum data_state { NORMAL, ID, SZ, DATE, VALUE, OPEN, HIGH, LOW, CLOSE, VOLUME};
+	enum data_state { NORMAL, ID, SZ, DATE, VALUE, OPEN, HIGH, LOW, CLOSE, VOLUME, SKIP};
 }
 using namespace stock;
 
@@ -15,11 +16,13 @@ void stock_t::get_token(ifstream &ifs) {
 	//cout << "TOKEN: <" << token << " >" << endl; // debug print
 }
 
-void stock_t::parse_stock_data_from_file(ifstream &ifs) {
+void stock_t::parse_stock_data_from_file(ifstream &ifs, int target) {
 	data_state state = NORMAL;
 	int id = 0, sz = 0, date;
 
-    while (ifs.good()) {
+	int runstop = 0;
+
+    while (ifs.good() && runstop <2) {
 		
 		switch(state) {
 			case NORMAL:
@@ -35,9 +38,22 @@ void stock_t::parse_stock_data_from_file(ifstream &ifs) {
 			case ID:
 				get_token(ifs);
 				id = atoi(token.c_str());
+
+				if (target != 0) {
+					if (id != target) {
+						state = SKIP;
+						break;
+					}
+				}
 				//cout << "set ID = " << id << endl;
 				state = NORMAL;
 				break; 
+			case SKIP:
+				get_token(ifs);
+				if (token.compare("*ID") == 0) 
+					state = ID;
+				
+				break;
 			case SZ:
 				get_token(ifs);
 				sz = atoi(token.c_str());
@@ -164,17 +180,53 @@ void stock_t::parse_value(ifstream &ifs, entity_t &entity) {
 void stock_t::print_data() {
 	for (data_map::iterator it = data.begin(); it != data.end(); ++it) {
 		cout << "ID " << it->first << endl;
-		entity_map refmap = it ->second;
+		entity_map &refmap = it->second;
 		for (entity_map::iterator it = refmap.begin(); it != refmap.end(); ++it) {
-			entity_t e = it->second;
-			cout << it->first << " " << e.open << " " << e.high << " " << e.low << " " << e.close << " " << e.volume << endl;
+			entity_t &e = it->second;
+		//	cout << it->first << " " << e.open << " " << e.high << " " << e.low << " " << e.close << " " << e.volume << endl;
+			cout << it->first << " " << e.close << " " << e.ma[30] << " " << e.ma[72] << " " << e.hly << endl;
 		}
 	}
 }
+void stock_t::compute_gravity_all() {
+	for (data_map::iterator it = data.begin(); it != data.end(); ++it) {
+		int id = it->first;
+		compute_gravity_for(id);
+	}
+}
 
+void stock_t::compute_gravity_for(int id) {
+	entity_map &stock_map = data.at(id);
+	int t1 = 30;
+	int t2 = 72;
+	compute_ma_for(id, t1);
+	compute_ma_for(id, t2);
 
+	for (entity_map::iterator it = stock_map.begin(); it != stock_map.end(); ++it) {
+		entity_t &e = it->second;
+		e.hly = (e.ma[t1] + e.ma[t2])/2;
+	}
+}
 
+void stock_t::compute_ma_for(int id, int t) {
+	if (t <= 1) { return; }
 
+	entity_map &stock_map = data.at(id);
+	double sum = 0;
+	queue<double> qued;
+
+	for (entity_map::iterator it = stock_map.begin(); it != stock_map.end(); ++it) {
+		entity_t &e = it->second;
+		if (qued.size() >= t) {
+			sum -= qued.front();
+			qued.pop();
+		} 
+		sum += e.close;
+		qued.push(e.close);
+		e.ma[t] = sum/qued.size();
+	}
+
+} 
 
 
 
