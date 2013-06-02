@@ -32,7 +32,16 @@ int main(int argc, char *argv[])
 	stkobj.compute_revenue_all();
 	cout << "training" << endl;
 	stkobj.box_training();
-	cout << "print data" << endl;
+
+	cout << "save data" << endl;
+	stkobj.save_boxsys("boxsys.data");
+
+	//cout << "restore_data" << endl;
+    //stock_t stkobj2;
+	//stkobj2.restore_boxsys("boxsys.data");
+	//stkobj2.save_boxsys("boxsys2.data");
+
+//	cout << "print data" << endl;
 //	stkobj.print_boxsys();
 //	stkobj.print_data();
 

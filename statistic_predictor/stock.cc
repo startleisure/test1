@@ -389,6 +389,57 @@ void stock_t::print_boxsys() {
 	}
 
 }
+void stock_t::restore_boxsys(const char *fileName) {
+	double w, g, h1, h2, rg, rh1, rh2;
+	ifstream ifs;
+	string token;
+	ifs.open(fileName);
+	ifs >> token;
+	while(ifs.good()) {
+		w = atof(token.c_str());
+		ifs >> token;
+		g = atof(token.c_str());
+		ifs >> token;
+		h1 = atof(token.c_str());
+		ifs >> token;
+		h2 = atof(token.c_str());
+		ifs >> token;
+		rg = atof(token.c_str());
+		ifs >> token;
+		rh1 = atof(token.c_str());
+		ifs >> token;
+		rh2 = atof(token.c_str());
+		ifs >> token;
+		boxsys.push_back( cell_t(w, g, h1, h2, rg, rh1, rh2) );
+	}
+	ifs.close();
+
+}
+void stock_t::save_boxsys(const char *fileName) {
+	if (fileName == NULL) {
+		cout << "Empty fileName !" << endl;
+		return;
+	}
+	ofstream ofs; 
+	ofs.open(fileName);
+
+	typedef map<cell_t::dim_type, set<double> > mapset;
+	for (vector<cell_t>::iterator it = boxsys.begin(); it != boxsys.end(); ++it) {
+		ofs << it->get_weight() << endl;
+		cell_t::coord center = it->get_center();
+		cell_t::coord radius = it->get_radius();
+		for (cell_t::coord::iterator it2 = center.begin(); it2 != center.end(); ++it2) {
+			ofs << it2->second;
+			ofs << " ";
+		}
+		for (cell_t::coord::iterator it2 = radius.begin(); it2 != radius.end(); ++it2) {
+			ofs << it2->second;
+			ofs << " ";
+		}
+		ofs << endl;
+	}
+	ofs.close();
+}
 
 bool cell_t::is_near(double g, double h1, double h2){
 	// review completed

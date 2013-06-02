@@ -59,6 +59,8 @@ class stock_t {
 	void box_training();
 	void box_testing();
 	void print_boxsys();
+	void save_boxsys(const char *fileName = NULL);
+	void restore_boxsys(const char *fileName = NULL);
 
   private:
     typedef map<int, entity_t> entity_map; // map int date, entity e 
@@ -72,15 +74,26 @@ class stock_t {
 
 class cell_t {
   public:
+	static const double radius_ratio = 0.4;   // % of the center to be min radius value
+	// tune this from 0.1 ~ 0.4 to control the box size, larger ratio smaller size of box created
+
 	static const double min_radius_g  = 1.0;  // radius of gravity
 	static const double min_radius_h1 = 0.1; // radius of hly derivative
 	static const double min_radius_h2 = 0.02; // radius of hly derivative
-	static const double radius_ratio = 0.1;   // % of the center to be min radius value
 	static const double dratio = 0.9; // define if distance >  dratio% of radius  imply outside the cell
 	enum dim_type { G = 0, H1, H2, DIM };
 	typedef map<dim_type, double> coord;
 	cell_t(coord &point) { 
 		center = point;
+	}
+	cell_t(double w, double g, double h1, double h2, double rg, double rh1, double rh2) { // direct construct the cell 
+		weight = w;
+		center[G]  = g;
+		center[H1] = h1;
+		center[H2] = h2;
+		radius[G]  = rg;
+		radius[H1] = rh1;
+		radius[H2] = rh2;
 	}
 	cell_t(double g, double h1, double h2) {
 		double tmp = 0.0; 
@@ -103,14 +116,15 @@ class cell_t {
 	}
 	double get_excite_value(double g, double h1, double h2);
 	bool is_near(double g, double h1, double h2);
+
 	double get_weight() { return weight;}
 	coord &get_center() { return center;}
 	coord &get_radius() { return radius;}
 
   private:
+	double weight; 
 	coord center;
 	coord radius;
-	double weight; //
 };
 
 
