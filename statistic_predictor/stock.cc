@@ -309,7 +309,7 @@ void stock_t::create_box_system() {
 		cout << "no data to create box system" << endl;
 		return;
 	}
-	//double gl , gr, h1l, h1r, h2l, h2r;
+	//double gl , gr, h1l, h1r, h2l, h2r; // chtest to find range of data
 	//gl = gr = h1l = h1r = h2l = h2r = 0.0;
 	int datasize = 0;
 	for (data_map::iterator it = data.begin(); it != data.end(); ++it) {
@@ -330,7 +330,7 @@ void stock_t::create_box_system() {
 			} else  {
 				//cout << "alredy have excited "<< counter << " cell! " << it2->first <<" "<< e.g << " " << e.hly[1] << " " << e.hly[2] << " excite: " << sum_of_excite << endl;
 			}
-			//if (e.g < gl ) gl = e.g;
+			//if (e.g < gl ) gl = e.g;  // chtest to find range of data
 			//if (e.g > gr ) gr = e.g;
 			//if (e.hly[1] < h1l) h1l = e.hly[1];
 			//if (e.hly[1] > h1r) h1r = e.hly[1];
@@ -343,18 +343,77 @@ void stock_t::create_box_system() {
 }
 
 void stock_t::box_training() {
+	double tratio = 0.1;
+	double ref = 0.0;
 	int n = 0; 
-	double error = 0.0;
+	double error = 1.0;
+	double err_min = 100.0;
+	double err_max = 0.0;
+	double err_sum = 0.0;
+	int err_num = 0;
 	if (data.size() == 0) {
 		cout << "no data to train" << endl;
 		return;
 	}
 
 	// training
-	while ( n < 1) {
+	//while ( n < 1 && error > 0.01) {
+	while ( n < 100 ) {
+		err_sum = err_max = 0.0;
+		err_min = 100.0;
+		err_num = 0;
 		++n;
+		for (data_map::iterator it = data.begin(); it != data.end(); ++it) { // ID, entity_map
+			entity_map &stock_map = it->second;
+			entity_map::iterator t1 = stock_map.begin(); 
+			entity_map::iterator t2 = stock_map.end(); 
+			for (int i = 0; i!= 3; ++i) 
+				t1++;
+			for (int i = 0; i!= 5; ++i) 
+				t2--;
+			
+			for (entity_map::iterator it2 = t1; it2 != t2; ++it2) { // DATE, entity
+				entity_t &e = it2->second;
+				entity_map::iterator next = it2; next++;
+				if (next == stock_map.end()) { break;}
+				double g = e.g, h1 = e.hly[1], h2 = e.hly[2];
+				double ref = next->second.revenue;
+				//if (ref <= -99.0 ) { break;}
+				double boxout = 0.0;
+				useCell_t useCell;
+				for (vector<cell_t>::iterator itc = boxsys.begin(); itc != boxsys.end(); ++itc) { // traverse box system
+					double excite = itc->get_excite_value(g, h1, h2);
+					if (excite > 0.1) {
+						boxout += (itc->get_weight() * excite);
+						useCell.push_back(make_pair(excite, itc));
+					}
+				}
+				error = boxout - ref;
+				error_correct(useCell, error, tratio);
+				if (abs(error) > 24.0) {
+					cout << boxout << " -  " << ref << " = " << error <<endl; 
+					cout << "DATE: " << it2->first << " g[" << g << "] h1[" << h1 << "] h2[" << h2 << "]" << endl;
+				}
+				if (abs(error) < abs(err_min)) { err_min  = error;}
+				if (abs(error) > abs(err_max)) { err_max  = error;}
+				++err_num;
+				err_sum += abs(error);
+			}
+		}
+		if (err_num != 0)
+			cout << n << " average of error: " <<  err_sum/((double)err_num) << " N: "<< err_num << endl;
+			cout << "min max error " << err_min << " , " << err_max <<endl;
 	}
 
+}
+
+void stock_t::error_correct(useCell_t &useCell, double err, double ratio) {
+	for (useCell_t::iterator it = useCell.begin(); it != useCell.end() ; ++it) {
+		double excite = it->first;
+		cell_t &cell = *(it->second);
+		// error back propagation
+		cell.get_weight() += (-excite * err * ratio);
+	}
 }
 
 void stock_t::print_boxsys() {
@@ -457,7 +516,6 @@ bool cell_t::is_near(double g, double h1, double h2){
 	return true;
 }
 double cell_t::get_excite_value(double g, double h1, double h2){
-	// review completed
 	static const double exp = 1.0/3.0;
 	double d1 = abs(g - center[G]);
 	double d2 = abs(h1 - center[H1]);

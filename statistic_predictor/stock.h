@@ -26,8 +26,8 @@ class cell_t;
 
 class stock_t {
   public:
-  stock_t() {};
-  ~stock_t() {};
+  	stock_t() {};
+ 	 ~stock_t() {};
     struct entity_t {
 		entity_t() {
 			open = high = low = close = g = revenue = 0.0;
@@ -41,6 +41,10 @@ class stock_t {
 		map<int, double> ma; // ma[30] , ma[72] , ....
 		vector<double> hly; // gravity line hly[0], velocity: hly[1], acceleration: hly[2]
     };
+    typedef map<int, entity_t> entity_map; // map int date, entity e 
+    typedef map<int , entity_map> data_map; // map stock_id, stock_data 
+	typedef vector<cell_t> cell_vector;
+	typedef vector< pair< double, cell_vector::iterator> > useCell_t;
 	
 
 	void get_token(ifstream &ifs);
@@ -57,24 +61,24 @@ class stock_t {
 	void print_data();
 	void create_box_system();
 	void box_training();
+	void error_correct(useCell_t &useCell, double err, double ratio);
+
 	void box_testing();
 	void print_boxsys();
 	void save_boxsys(const char *fileName = NULL);
 	bool restore_boxsys(const char *fileName = NULL);
 
   private:
-    typedef map<int, entity_t> entity_map; // map int date, entity e 
-    typedef map<int , entity_map> data_map; // map stock_id, stock_data 
 
     data_map data; // map stock_id, stock_data 
 	string token;
-	vector<cell_t> boxsys;
+	cell_vector boxsys;
 };
 
 
 class cell_t {
   public:
-	static const double radius_ratio = 0.4;   // % of the center to be min radius value
+	static const double radius_ratio = 0.1;   // % of the center to be min radius value
 	// tune this from 0.1 ~ 0.4 to control the box size, larger ratio smaller size of box created
 
 	static const double min_radius_g  = 1.0;  // radius of gravity
@@ -117,7 +121,7 @@ class cell_t {
 	double get_excite_value(double g, double h1, double h2);
 	bool is_near(double g, double h1, double h2);
 
-	double get_weight() { return weight;}
+	double &get_weight() { return weight;}
 	coord &get_center() { return center;}
 	coord &get_radius() { return radius;}
 
