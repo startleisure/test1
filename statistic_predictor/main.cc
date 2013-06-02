@@ -16,8 +16,8 @@ int main(int argc, char *argv[])
 	// open file
     ifs.open("stock.data"); 
 	// parse data
-    //stkobj.parse_stock_data_from_file(ifs, 3034);
-    stkobj.parse_stock_data_from_file(ifs);
+    stkobj.parse_stock_data_from_file(ifs, 3034);
+//    stkobj.parse_stock_data_from_file(ifs);
     ifs.close();
 
 //	stkobj.compute_gravity_for(1101);

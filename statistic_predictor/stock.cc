@@ -1,8 +1,4 @@
 #include "stock.h"
-#include <iostream>
-#include <cstdlib>
-#include <vector>
-#include <queue>
 
 
 
@@ -184,7 +180,8 @@ void stock_t::print_data() {
 		for (entity_map::iterator it = refmap.begin(); it != refmap.end(); ++it) {
 			entity_t &e = it->second;
 		//	cout << it->first << " " << e.open << " " << e.high << " " << e.low << " " << e.close << " " << e.volume << endl;
-			cout << it->first << " " << e.close << " " << e.ma[30] << " " << e.ma[72] << " " << e.hly << endl;
+			//cout << it->first << " " << e.close << " " << e.ma[30] << " " << e.ma[72] << " " << e.hly[0] << " " << e.hly[1] << " " << e.hly[2]<< endl;
+			cout << it->first << " " << e.close << " " << e.hly[0] << " " << e.hly[1] << " " << e.hly[2]<< endl;
 		}
 	}
 }
@@ -195,7 +192,10 @@ void stock_t::compute_gravity_all() {
 	}
 }
 
-void stock_t::compute_gravity_for(int id) {
+inline double calculate_delta_value(double p1, double p2, double p3, double p4) { // PS. delta value of distance is velocity
+	return -0.3*p1 + -0.1*p2 + 0.1*p3 + 0.3*p4;
+}
+void stock_t::compute_gravity_for(int id) { // HLY formula
 	entity_map &stock_map = data.at(id);
 	int t1 = 30;
 	int t2 = 72;
@@ -204,8 +204,32 @@ void stock_t::compute_gravity_for(int id) {
 
 	for (entity_map::iterator it = stock_map.begin(); it != stock_map.end(); ++it) {
 		entity_t &e = it->second;
-		e.hly = (e.ma[t1] + e.ma[t2])/2;
+		e.hly[0] = (e.ma[t1] + e.ma[t2])/2;
 	}
+
+	//compute velocity:  4 points estimation: -0.3, -0.1, 0.1, 0.3
+	vector<double> points(4, 0.0);
+	for (entity_map::iterator it = stock_map.begin(); it != stock_map.end(); ++it) {
+		entity_t &e = it->second;
+		points[0] = points[1];
+		points[1] = points[2];
+		points[2] = points[3];
+		points[3] = e.hly[0];
+		e.hly[1] = calculate_delta_value(points[0], points[1], points[2], points[3]);
+			
+	}
+
+	vector<double> vpoints(4, 0.0);
+	//compute acceleration:  4 points estimation: -0.3, -0.1, 0.1, 0.3
+	for (entity_map::iterator it = stock_map.begin(); it != stock_map.end(); ++it) {
+		entity_t &e = it->second;
+		vpoints[0] = vpoints[1];
+		vpoints[1] = vpoints[2];
+		vpoints[2] = vpoints[3];
+		vpoints[3] = e.hly[1];
+		e.hly[2] = calculate_delta_value(vpoints[0], vpoints[1], vpoints[2], vpoints[3]);
+	}
+	
 }
 
 void stock_t::compute_ma_for(int id, int t) {

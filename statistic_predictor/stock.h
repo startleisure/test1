@@ -3,6 +3,10 @@
 
 #include <map>
 #include <fstream>
+#include <vector>
+#include <iostream>
+#include <cstdlib>
+#include <queue>
 
 using namespace std;
 // design interface , 2013,0601, ChiHsien //
@@ -21,10 +25,13 @@ class stock_t {
   stock_t() {};
   ~stock_t() {};
     struct entity_t {
+		entity_t() {
+			hly = vector<double> (3, 0.0);
+		}
         double open, high, low, close;
         int volume;
 		map<int, double> ma; // ma[30] , ma[72] , ....
-		double hly; // gravity line
+		vector<double> hly; // gravity line hly[0], velocity: hly[1], acceleration: hly[2]
     };
 	
 
@@ -35,6 +42,7 @@ class stock_t {
 	void compute_gravity_for(int id);
 	void compute_gravity_all();
 	void compute_ma_for(int id, int t);
+	void compute_velocity();
 	
 	void print_data();
 
