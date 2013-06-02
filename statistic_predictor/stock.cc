@@ -304,22 +304,35 @@ void stock_t::compute_revenue_for(int id, int date, int t) {
 	e_start.revenue = 100*(sold-cost)/cost;
 }
 void stock_t::create_box_system() {
+	//double gl , gr, h1l, h1r, h2l, h2r;
+	//gl = gr = h1l = h1r = h2l = h2r = 0.0;
 	int datasize = 0;
 	for (data_map::iterator it = data.begin(); it != data.end(); ++it) {
 		entity_map &stock_map = it->second;
 		datasize += stock_map.size();
 		for (entity_map::iterator it2 = stock_map.begin(); it2 != stock_map.end(); ++it2) {
 			entity_t &e = it2->second;
-			double sum_of_excite = 0.0;
+			double g = e.g, h1 = e.hly[1], h2 = e.hly[2];
+			//double g = 0.0, h1 = 0.0, h2 = e.hly[2];
+			bool has_near_cell = false;
+			
 			for (vector<cell_t>::iterator itc = boxsys.begin(); itc != boxsys.end(); ++itc) {
-				sum_of_excite += itc->get_excite_value(e.g, e.hly[1], e.hly[2]);
+				if( has_near_cell = itc->is_near(g, h1, h2) ) 
+					break;
 			}
-			if (sum_of_excite == 0.0)  {
-				boxsys.push_back( cell_t(e.g, e.hly[1], e.hly[2]) );
+			if (!has_near_cell)  {
+				boxsys.push_back( cell_t(g, h1, h2) );
 			} else  {
 				//cout << "alredy have excited "<< counter << " cell! " << it2->first <<" "<< e.g << " " << e.hly[1] << " " << e.hly[2] << " excite: " << sum_of_excite << endl;
 			}
+			//if (e.g < gl ) gl = e.g;
+			//if (e.g > gr ) gr = e.g;
+			//if (e.hly[1] < h1l) h1l = e.hly[1];
+			//if (e.hly[1] > h1r) h1r = e.hly[1];
+			//if (e.hly[2] < h2l) h2l = e.hly[2];
+			//if (e.hly[2] > h2r) h2r = e.hly[2];
 		}
+		//cout << "data  "<< it->first<< "range: g[" << gl << " , " << gr << "] h1[" << h1l << " , " << h1r << "] h2[" << h2l << " , " << h2r << "]" << endl;
 		cout << "create_box_system: sz= "<< boxsys.size() << " for data sz: " << datasize << endl;
 	}
 }
@@ -341,12 +354,59 @@ void stock_t::box_training() {
 
 }
 
+void stock_t::print_boxsys() {
+	typedef map<cell_t::dim_type, set<double> > mapset;
+	mapset mycenter;
+	mapset myradius;
+	for (vector<cell_t>::iterator it = boxsys.begin(); it != boxsys.end(); ++it) {
+		cell_t::coord center = it->get_center();
+		cell_t::coord radius = it->get_radius();
+		for (cell_t::coord::iterator it2 = center.begin(); it2 != center.end(); ++it2)
+			mycenter[it2->first].insert(it2->second);
+		for (cell_t::coord::iterator it2 = radius.begin(); it2 != radius.end(); ++it2)
+			myradius[it2->first].insert(it2->second);
+	}
+
+	cout << "cell center print: "<< endl;
+	for(mapset::iterator it = mycenter.begin(); it != mycenter.end(); ++it) {
+		if (it->first == cell_t::G) { cout << "G: " << endl;}
+		if (it->first == cell_t::H1) { cout << "H1: " << endl;}
+		if (it->first == cell_t::H2) { cout << "H2: " << endl;}
+		for (mapset::mapped_type::iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2) {
+			cout << *it2 << " " ;
+		}
+		cout << endl;
+	}
+	cout << "cell radius print: "<< endl;
+	for(mapset::iterator it = myradius.begin(); it != myradius.end(); ++it) {
+		if (it->first == cell_t::G) { cout << "G: " << endl;}
+		if (it->first == cell_t::H1) { cout << "H1: " << endl;}
+		if (it->first == cell_t::H2) { cout << "H2: " << endl;}
+		for (mapset::mapped_type::iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2) {
+			cout << *it2 << " " ;
+		}
+		cout << endl;
+	}
+
+}
+
+bool cell_t::is_near(double g, double h1, double h2){
+	// review completed
+	double d1 = abs(g - center[G]);
+	double d2 = abs(h1 - center[H1]);
+	double d3 = abs(h2 - center[H2]);
+	if (d1 > dratio*radius[G] || d2 > dratio*radius[H1] || d3 > dratio*radius[H2]) { // not near the center 
+		return false; 
+	}
+	return true;
+}
 double cell_t::get_excite_value(double g, double h1, double h2){
+	// review completed
 	static const double exp = 1.0/3.0;
 	double d1 = abs(g - center[G]);
-	double d2 = abs(g - center[H1]);
-	double d3 = abs(g - center[H2]);
-	if (d1 > dratio*radius[G] || d2 > dratio*radius[H1] || d3 > dratio*radius[H2]) { // if outside the cell
+	double d2 = abs(h1 - center[H1]);
+	double d3 = abs(h2 - center[H2]);
+	if (d1 > radius[G] || d2 > radius[H1] || d3 > radius[H2]) { // if outside the cell
 		return 0.0;
 	}
 	double base =(1- d1/radius[G]) * (1- d2/radius[H1]) * (1- d3/radius[H2]);

@@ -1,4 +1,6 @@
 #!/bin/csh -f
 
+make clean;
 make;
 a.out 3034 > log.3034
+vi log.3034

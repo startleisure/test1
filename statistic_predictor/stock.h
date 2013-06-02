@@ -2,6 +2,7 @@
 #define STOCK_H
 
 #include <map>
+#include <set>
 #include <fstream>
 #include <vector>
 #include <iostream>
@@ -57,6 +58,7 @@ class stock_t {
 	void create_box_system();
 	void box_training();
 	void box_testing();
+	void print_boxsys();
 
   private:
     typedef map<int, entity_t> entity_map; // map int date, entity e 
@@ -70,10 +72,10 @@ class stock_t {
 
 class cell_t {
   public:
-	static const double min_radius_g  = 2.0;  // radius of gravity
-	static const double min_radius_h1 = 0.2; // radius of hly derivative
+	static const double min_radius_g  = 1.0;  // radius of gravity
+	static const double min_radius_h1 = 0.1; // radius of hly derivative
 	static const double min_radius_h2 = 0.02; // radius of hly derivative
-	static const double radius_ratio = 0.3;   // % of the center absolute value
+	static const double radius_ratio = 0.1;   // % of the center to be min radius value
 	static const double dratio = 0.9; // define if distance >  dratio% of radius  imply outside the cell
 	enum dim_type { G = 0, H1, H2, DIM };
 	typedef map<dim_type, double> coord;
@@ -100,7 +102,10 @@ class cell_t {
 		else 				 	 radius[H2] = min_radius_h2;
 	}
 	double get_excite_value(double g, double h1, double h2);
+	bool is_near(double g, double h1, double h2);
 	double get_weight() { return weight;}
+	coord &get_center() { return center;}
+	coord &get_radius() { return radius;}
 
   private:
 	coord center;
