@@ -194,6 +194,7 @@ void stock_t::print_data() {
 	}
 }
 void stock_t::compute_gravity_all() {
+//	stkobj.compute_gravity_for(1101);
 	for (data_map::iterator it = data.begin(); it != data.end(); ++it) {
 		int id = it->first;
 		compute_gravity_for(id);
@@ -304,6 +305,10 @@ void stock_t::compute_revenue_for(int id, int date, int t) {
 	e_start.revenue = 100*(sold-cost)/cost;
 }
 void stock_t::create_box_system() {
+	if (data.size() == 0) {
+		cout << "no data to create box system" << endl;
+		return;
+	}
 	//double gl , gr, h1l, h1r, h2l, h2r;
 	//gl = gr = h1l = h1r = h2l = h2r = 0.0;
 	int datasize = 0;
@@ -344,8 +349,6 @@ void stock_t::box_training() {
 		cout << "no data to train" << endl;
 		return;
 	}
-	// Create box system 
-	create_box_system();
 
 	// training
 	while ( n < 1) {
@@ -389,11 +392,12 @@ void stock_t::print_boxsys() {
 	}
 
 }
-void stock_t::restore_boxsys(const char *fileName) {
+bool stock_t::restore_boxsys(const char *fileName) {
 	double w, g, h1, h2, rg, rh1, rh2;
 	ifstream ifs;
 	string token;
 	ifs.open(fileName);
+	if (!ifs.good()) { return false;}
 	ifs >> token;
 	while(ifs.good()) {
 		w = atof(token.c_str());
@@ -414,6 +418,7 @@ void stock_t::restore_boxsys(const char *fileName) {
 	}
 	ifs.close();
 
+	return true;
 }
 void stock_t::save_boxsys(const char *fileName) {
 	if (fileName == NULL) {

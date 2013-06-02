@@ -60,7 +60,7 @@ class stock_t {
 	void box_testing();
 	void print_boxsys();
 	void save_boxsys(const char *fileName = NULL);
-	void restore_boxsys(const char *fileName = NULL);
+	bool restore_boxsys(const char *fileName = NULL);
 
   private:
     typedef map<int, entity_t> entity_map; // map int date, entity e 
