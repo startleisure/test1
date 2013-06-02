@@ -7,6 +7,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <queue>
+#include <cmath>
 
 using namespace std;
 // design interface , 2013,0601, ChiHsien //
@@ -53,6 +54,8 @@ class stock_t {
 	void compute_revenue_for(int id, int date, int t); // revenue at +t days when buy at (id, date)
 	
 	void print_data();
+	void box_training();
+	void box_testing();
 
   private:
     typedef map<int, entity_t> entity_map; // map int date, entity e 
@@ -60,25 +63,46 @@ class stock_t {
 
     data_map data; // map stock_id, stock_data 
 	string token;
-	vector<cell_t> boxs;
+	vector<cell_t> boxsys;
 };
 
 
 class cell_t {
   public:
+	static const double min_radius_g  = 0.5;  // radius of gravity
+	static const double min_radius_h1 = 0.05; // radius of hly derivative
+	static const double min_radius_h2 = 0.005; // radius of hly derivative
+	static const double radius_ratio = 0.1;   // 10% of the center absolute value
 	enum dim_type { G = 0, H1, H2, DIM };
 	typedef map<dim_type, double> coord;
 	cell_t(coord &point) { 
 		center = point;
 	}
 	cell_t(double g, double h1, double h2) {
-		center[G] = g;
+		double tmp = 0.0; 
+		force = 0.0;
+		center[G]  = g;
 		center[H1] = h1;
 		center[H2] = h2;
+		
+		tmp = abs(radius_ratio*g); 
+		if (tmp > min_radius_g) radius[G] = tmp;
+		else					radius[G] = min_radius_g;
+
+		tmp = abs(radius_ratio*h1); 
+		if (tmp > min_radius_h1) radius[H1] = tmp;
+		else		 			 radius[H1] = min_radius_h1;
+
+		tmp = abs(radius_ratio*h2);
+		if (tmp > min_radius_h2) radius[H2] = tmp;
+		else 				 	 radius[H2] = min_radius_h2;
 	}
+	double get_excite_value(double g, double h1, double h2);
 
   private:
 	coord center;
+	coord radius;
+	double force;
 };
 
 

@@ -242,9 +242,9 @@ void stock_t::compute_gravity_for(int id) { // HLY formula
 		vpoints[2] = vpoints[3];
 		vpoints[3] = e.hly[1];
 		if (vpoints[3] == 0.0 ) {
-			e.hly[2] = calculate_delta_value(vpoints[0], vpoints[1], vpoints[2], vpoints[3])/10;
+			e.hly[2] = calculate_delta_value(vpoints[0], vpoints[1], vpoints[2], vpoints[3]);
 		} else { 
-			e.hly[2] = calculate_delta_value(vpoints[0], vpoints[1], vpoints[2], vpoints[3])/e.hly[1];
+			e.hly[2] = calculate_delta_value(vpoints[0], vpoints[1], vpoints[2], vpoints[3]);
 		}
 	}
 	
@@ -302,8 +302,24 @@ void stock_t::compute_revenue_for(int id, int date, int t) {
 	}
 
 	e_start.revenue = 100*(sold-cost)/cost;
-	
+}
 
+void stock_t::box_training() {
+
+}
+
+double cell_t::get_excite_value(double g, double h1, double h2){
+	static double exp = 1.0/3.0;
+	double d1 = abs(g - center[G]);
+	double d2 = abs(g - center[H1]);
+	double d3 = abs(g - center[H2]);
+	if (d1 > radius[G] || d2 > radius[H1] || d3 > radius[H2]) { // input point is outside this cell
+		return 0.0;
+	}
+	double base =(1-d1/radius[G]) * (1 -d2/radius[H1]) * (1- d3/radius[H2]);
+	double result = pow(base, exp) * force;
+
+	return result;
 }
 
 
