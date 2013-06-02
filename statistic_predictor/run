@@ -1,4 +1,4 @@
 #!/bin/csh -f
 
 make;
-a.out
+a.out 3034 > log.3034

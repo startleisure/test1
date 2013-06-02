@@ -26,9 +26,13 @@ class stock_t {
   ~stock_t() {};
     struct entity_t {
 		entity_t() {
+			open = high = low = close = g = revenue = 0.0;
+			volume = 0;
 			hly = vector<double> (3, 0.0);
 		}
         double open, high, low, close;
+		double g; // (v/hly[0] -1 )*100 
+		double revenue;
         int volume;
 		map<int, double> ma; // ma[30] , ma[72] , ....
 		vector<double> hly; // gravity line hly[0], velocity: hly[1], acceleration: hly[2]
@@ -43,6 +47,8 @@ class stock_t {
 	void compute_gravity_all();
 	void compute_ma_for(int id, int t);
 	void compute_velocity();
+	void compute_revenue_all(); // revenue at +t days when buy at (id, date)
+	void compute_revenue_for(int id, int date, int t); // revenue at +t days when buy at (id, date)
 	
 	void print_data();
 

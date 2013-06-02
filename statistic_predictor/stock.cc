@@ -1,4 +1,5 @@
 #include "stock.h"
+#include <iomanip>
 
 
 
@@ -181,7 +182,13 @@ void stock_t::print_data() {
 			entity_t &e = it->second;
 		//	cout << it->first << " " << e.open << " " << e.high << " " << e.low << " " << e.close << " " << e.volume << endl;
 			//cout << it->first << " " << e.close << " " << e.ma[30] << " " << e.ma[72] << " " << e.hly[0] << " " << e.hly[1] << " " << e.hly[2]<< endl;
-			cout << it->first << " " << e.close << " " << e.hly[0] << " " << e.hly[1] << " " << e.hly[2]<< endl;
+			cout << it->first << setw(5) << " C[" 
+				 << e.close  << "]\tg[" 
+			     << e.g 	 << "]\th[" 
+				 << e.hly[0] << "]\th1[" 
+				 << e.hly[1] << "]\th2[" 
+				 << e.hly[2] << "]\tR["
+				 << e.revenue <<"]" << endl;
 		}
 	}
 }
@@ -205,9 +212,12 @@ void stock_t::compute_gravity_for(int id) { // HLY formula
 	for (entity_map::iterator it = stock_map.begin(); it != stock_map.end(); ++it) {
 		entity_t &e = it->second;
 		e.hly[0] = (e.ma[t1] + e.ma[t2])/2;
+		// compute g
+		e.g = (e.close/e.hly[0] - 1)*100;
 	}
 
 	//compute velocity:  4 points estimation: -0.3, -0.1, 0.1, 0.3
+	// unit %:  percentange change 
 	vector<double> points(4, 0.0);
 	for (entity_map::iterator it = stock_map.begin(); it != stock_map.end(); ++it) {
 		entity_t &e = it->second;
@@ -215,19 +225,26 @@ void stock_t::compute_gravity_for(int id) { // HLY formula
 		points[1] = points[2];
 		points[2] = points[3];
 		points[3] = e.hly[0];
-		e.hly[1] = calculate_delta_value(points[0], points[1], points[2], points[3]);
-			
+		if (points[3] == 0.0 ) {
+			e.hly[1] = 100*calculate_delta_value(points[0], points[1], points[2], points[3])/10;
+		} else { 
+			e.hly[1] = 100*calculate_delta_value(points[0], points[1], points[2], points[3])/e.hly[0];
+		}
 	}
 
-	vector<double> vpoints(4, 0.0);
 	//compute acceleration:  4 points estimation: -0.3, -0.1, 0.1, 0.3
+	vector<double> vpoints(4, 0.0);
 	for (entity_map::iterator it = stock_map.begin(); it != stock_map.end(); ++it) {
 		entity_t &e = it->second;
 		vpoints[0] = vpoints[1];
 		vpoints[1] = vpoints[2];
 		vpoints[2] = vpoints[3];
 		vpoints[3] = e.hly[1];
-		e.hly[2] = calculate_delta_value(vpoints[0], vpoints[1], vpoints[2], vpoints[3]);
+		if (vpoints[3] == 0.0 ) {
+			e.hly[2] = calculate_delta_value(vpoints[0], vpoints[1], vpoints[2], vpoints[3])/10;
+		} else { 
+			e.hly[2] = calculate_delta_value(vpoints[0], vpoints[1], vpoints[2], vpoints[3])/e.hly[1];
+		}
 	}
 	
 }
@@ -252,7 +269,41 @@ void stock_t::compute_ma_for(int id, int t) {
 
 } 
 
+void stock_t::compute_revenue_all() {
+	for (data_map::iterator it = data.begin(); it != data.end(); ++it) {
+		int id = it->first;
+		entity_map &stock_map = data.at(id);
+		for (entity_map::iterator it2 = stock_map.begin(); it2 != stock_map.end(); ++it2) {
+			compute_revenue_for(id, it2->first, 5);
+		}
+	}
+}
 
+void stock_t::compute_revenue_for(int id, int date, int t) {
+	int n = 0;
+	double cost = 0;
+	double sold = 0;
+	vector<double> v1;
+
+	entity_map &stock_map = data.at(id);
+	entity_map::iterator start = stock_map.find(date);
+
+	if (start == stock_map.end()) return;
+
+	entity_t &e_start = start->second;
+	cost = e_start.close;
+		
+	for (entity_map::iterator it = start; n != t && it != stock_map.end(); ++it, ++n) {
+		if (n == (t-1)) {
+			entity_t &e = it->second;
+			sold = e.close;
+		}
+	}
+
+	e_start.revenue = 100*(sold-cost)/cost;
+	
+
+}
 
 
 
