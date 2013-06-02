@@ -351,6 +351,7 @@ void stock_t::box_training() {
 	double err_max = 0.0;
 	double err_sum = 0.0;
 	int err_num = 0;
+	int accept_num = 0;
 	if (data.size() == 0) {
 		cout << "no data to train" << endl;
 		return;
@@ -358,10 +359,10 @@ void stock_t::box_training() {
 
 	// training
 	//while ( n < 1 && error > 0.01) {
-	while ( n < 100 ) {
+	while ( n < 10000 ) {
 		err_sum = err_max = 0.0;
 		err_min = 100.0;
-		err_num = 0;
+		err_num = accept_num = 0;
 		++n;
 		for (data_map::iterator it = data.begin(); it != data.end(); ++it) { // ID, entity_map
 			entity_map &stock_map = it->second;
@@ -390,9 +391,11 @@ void stock_t::box_training() {
 				}
 				error = boxout - ref;
 				error_correct(useCell, error, tratio);
-				if (abs(error) > 24.0) {
-					cout << boxout << " -  " << ref << " = " << error <<endl; 
-					cout << "DATE: " << it2->first << " g[" << g << "] h1[" << h1 << "] h2[" << h2 << "]" << endl;
+				//if (abs(error) < 0.1 && boxout > 2.0) {
+				if (abs(error) < 0.1 ) {
+					accept_num ++;
+					//cout << boxout << " -  " << ref << " = " << error <<endl; 
+					//cout << "DATE: " << it2->first << " g[" << g << "] h1[" << h1 << "] h2[" << h2 << "]" << endl;
 				}
 				if (abs(error) < abs(err_min)) { err_min  = error;}
 				if (abs(error) > abs(err_max)) { err_max  = error;}
@@ -401,7 +404,7 @@ void stock_t::box_training() {
 			}
 		}
 		if (err_num != 0)
-			cout << n << " average of error: " <<  err_sum/((double)err_num) << " N: "<< err_num << endl;
+			cout << n << " average of error: " <<  err_sum/((double)err_num) << " N: "<< err_num << "accept " <<  accept_num  << endl;
 			cout << "min max error " << err_min << " , " << err_max <<endl;
 	}
 
