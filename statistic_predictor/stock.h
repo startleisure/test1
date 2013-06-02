@@ -54,6 +54,7 @@ class stock_t {
 	void compute_revenue_for(int id, int date, int t); // revenue at +t days when buy at (id, date)
 	
 	void print_data();
+	void create_box_system();
 	void box_training();
 	void box_testing();
 
@@ -69,10 +70,11 @@ class stock_t {
 
 class cell_t {
   public:
-	static const double min_radius_g  = 0.5;  // radius of gravity
-	static const double min_radius_h1 = 0.05; // radius of hly derivative
-	static const double min_radius_h2 = 0.005; // radius of hly derivative
-	static const double radius_ratio = 0.1;   // 10% of the center absolute value
+	static const double min_radius_g  = 2.0;  // radius of gravity
+	static const double min_radius_h1 = 0.2; // radius of hly derivative
+	static const double min_radius_h2 = 0.02; // radius of hly derivative
+	static const double radius_ratio = 0.3;   // % of the center absolute value
+	static const double dratio = 0.9; // define if distance >  dratio% of radius  imply outside the cell
 	enum dim_type { G = 0, H1, H2, DIM };
 	typedef map<dim_type, double> coord;
 	cell_t(coord &point) { 
@@ -80,7 +82,7 @@ class cell_t {
 	}
 	cell_t(double g, double h1, double h2) {
 		double tmp = 0.0; 
-		force = 0.0;
+		weight = 0.0;
 		center[G]  = g;
 		center[H1] = h1;
 		center[H2] = h2;
@@ -98,11 +100,12 @@ class cell_t {
 		else 				 	 radius[H2] = min_radius_h2;
 	}
 	double get_excite_value(double g, double h1, double h2);
+	double get_weight() { return weight;}
 
   private:
 	coord center;
 	coord radius;
-	double force;
+	double weight; //
 };
 
 

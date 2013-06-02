@@ -28,6 +28,7 @@ int main(int argc, char *argv[])
 //	stkobj.compute_gravity_for(1101);
 	stkobj.compute_gravity_all();
 	stkobj.compute_revenue_all();
+	stkobj.box_training();
 	stkobj.print_data();
 
     return 0;

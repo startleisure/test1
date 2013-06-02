@@ -303,21 +303,54 @@ void stock_t::compute_revenue_for(int id, int date, int t) {
 
 	e_start.revenue = 100*(sold-cost)/cost;
 }
+void stock_t::create_box_system() {
+	int datasize = 0;
+	for (data_map::iterator it = data.begin(); it != data.end(); ++it) {
+		entity_map &stock_map = it->second;
+		datasize += stock_map.size();
+		for (entity_map::iterator it2 = stock_map.begin(); it2 != stock_map.end(); ++it2) {
+			entity_t &e = it2->second;
+			double sum_of_excite = 0.0;
+			for (vector<cell_t>::iterator itc = boxsys.begin(); itc != boxsys.end(); ++itc) {
+				sum_of_excite += itc->get_excite_value(e.g, e.hly[1], e.hly[2]);
+			}
+			if (sum_of_excite == 0.0)  {
+				boxsys.push_back( cell_t(e.g, e.hly[1], e.hly[2]) );
+			} else  {
+				//cout << "alredy have excited "<< counter << " cell! " << it2->first <<" "<< e.g << " " << e.hly[1] << " " << e.hly[2] << " excite: " << sum_of_excite << endl;
+			}
+		}
+		cout << "create_box_system: sz= "<< boxsys.size() << " for data sz: " << datasize << endl;
+	}
+}
 
 void stock_t::box_training() {
+	int n = 0; 
+	double error = 0.0;
+	if (data.size() == 0) {
+		cout << "no data to train" << endl;
+		return;
+	}
+	// Create box system 
+	create_box_system();
+
+	// training
+	while ( n < 1) {
+		++n;
+	}
 
 }
 
 double cell_t::get_excite_value(double g, double h1, double h2){
-	static double exp = 1.0/3.0;
+	static const double exp = 1.0/3.0;
 	double d1 = abs(g - center[G]);
 	double d2 = abs(g - center[H1]);
 	double d3 = abs(g - center[H2]);
-	if (d1 > radius[G] || d2 > radius[H1] || d3 > radius[H2]) { // input point is outside this cell
+	if (d1 > dratio*radius[G] || d2 > dratio*radius[H1] || d3 > dratio*radius[H2]) { // if outside the cell
 		return 0.0;
 	}
-	double base =(1-d1/radius[G]) * (1 -d2/radius[H1]) * (1- d3/radius[H2]);
-	double result = pow(base, exp) * force;
+	double base =(1- d1/radius[G]) * (1- d2/radius[H1]) * (1- d3/radius[H2]);
+	double result = pow(base, exp);
 
 	return result;
 }
