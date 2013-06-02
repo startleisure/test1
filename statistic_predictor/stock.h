@@ -19,6 +19,8 @@ using namespace std;
 // ('Mar 29, 2013', '37.50', '37.55', '36.90', '37.50', '3,548,000')
 //  ...
 // ID ...
+class stock_t;
+class cell_t;
 
 class stock_t {
   public:
@@ -58,6 +60,25 @@ class stock_t {
 
     data_map data; // map stock_id, stock_data 
 	string token;
+	vector<cell_t> boxs;
+};
+
+
+class cell_t {
+  public:
+	enum dim_type { G = 0, H1, H2, DIM };
+	typedef map<dim_type, double> coord;
+	cell_t(coord &point) { 
+		center = point;
+	}
+	cell_t(double g, double h1, double h2) {
+		center[G] = g;
+		center[H1] = h1;
+		center[H2] = h2;
+	}
+
+  private:
+	coord center;
 };
 
 

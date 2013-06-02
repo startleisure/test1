@@ -182,13 +182,14 @@ void stock_t::print_data() {
 			entity_t &e = it->second;
 		//	cout << it->first << " " << e.open << " " << e.high << " " << e.low << " " << e.close << " " << e.volume << endl;
 			//cout << it->first << " " << e.close << " " << e.ma[30] << " " << e.ma[72] << " " << e.hly[0] << " " << e.hly[1] << " " << e.hly[2]<< endl;
-			cout << it->first << setw(5) << " C[" 
-				 << e.close  << "]\tg[" 
-			     << e.g 	 << "]\th[" 
-				 << e.hly[0] << "]\th1[" 
-				 << e.hly[1] << "]\th2[" 
-				 << e.hly[2] << "]\tR["
-				 << e.revenue <<"]" << endl;
+			cout << it->first << setw(5) 
+				 << " C[" 	<< e.close  
+				 << "]\th[" << e.hly[0] 
+				 << "]\tg[" << e.g 	 
+				 << "]\th1["<< e.hly[1] 
+				 << "]\th2["<< e.hly[2] 
+				 << "]\tR[" << e.revenue 
+				 <<"]" << endl;
 		}
 	}
 }
