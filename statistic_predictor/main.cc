@@ -84,6 +84,8 @@ int main(int argc, char *argv[])
 	cout << "save data" << endl;
 	stkobj.save_boxsys("boxsys2.data");
 
+	cout << "testing" << endl;
+	stkobj.box_testing() ;
 //	cout << "print data" << endl;
 //	stkobj.print_boxsys();
 //	stkobj.print_data();

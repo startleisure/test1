@@ -78,11 +78,11 @@ class stock_t {
 
 class cell_t {
   public:
-	static const double radius_ratio = 0.05;   // % of the center to be min radius value
+	static const double radius_ratio = 0.1;   // % of the center to be min radius value
 	// tune this from 0.1 ~ 0.4 to control the box size, larger ratio smaller size of box created
 
 	static const double min_radius_g  = 0.5;  // radius of gravity
-	static const double min_radius_h1 = 0.05; // radius of hly derivative
+	static const double min_radius_h1 = 0.1; // radius of hly derivative
 	static const double min_radius_h2 = 0.01; // radius of hly derivative
 	static const double dratio = 0.9; // define if distance >  dratio% of radius  imply outside the cell
 	enum dim_type { G = 0, H1, H2, DIM };

@@ -343,13 +343,18 @@ void stock_t::create_box_system() {
 }
 
 void stock_t::box_training() {
-	double tratio = 0.1;
+	set<double> errset;
+	double tratio = 0.4;
 	double ref = 0.0;
 	int n = 0; 
 	double error = 1.0;
 	double err_min = 100.0;
 	double err_max = 0.0;
 	double err_sum = 0.0;
+	double err_sum_d = 1.0;
+	double err_sum_p = 0.0;
+	double err_med = 1000.0;
+	double err_95 = 1000.0;
 	int err_num = 0;
 	int accept_num = 0;
 	if (data.size() == 0) {
@@ -359,7 +364,9 @@ void stock_t::box_training() {
 
 	// training
 	//while ( n < 1 && error > 0.01) {
-	while ( n < 10000 ) {
+	while ( n < 100  && err_95 > 0.1 && abs(err_sum_d) > 0.000001) {
+		err_sum_p = err_sum;
+		errset.clear();
 		err_sum = err_max = 0.0;
 		err_min = 100.0;
 		err_num = accept_num = 0;
@@ -384,7 +391,7 @@ void stock_t::box_training() {
 				useCell_t useCell;
 				for (vector<cell_t>::iterator itc = boxsys.begin(); itc != boxsys.end(); ++itc) { // traverse box system
 					double excite = itc->get_excite_value(g, h1, h2);
-					if (excite > 0.1) {
+					if (excite > 0.3) {
 						boxout += (itc->get_weight() * excite);
 						useCell.push_back(make_pair(excite, itc));
 					}
@@ -392,21 +399,52 @@ void stock_t::box_training() {
 				error = boxout - ref;
 				error_correct(useCell, error, tratio);
 				//if (abs(error) < 0.1 && boxout > 2.0) {
+				errset.insert(abs(error));
 				if (abs(error) < 0.1 ) {
 					accept_num ++;
 					//cout << boxout << " -  " << ref << " = " << error <<endl; 
 					//cout << "DATE: " << it2->first << " g[" << g << "] h1[" << h1 << "] h2[" << h2 << "]" << endl;
 				}
+				//if (abs(error) < 20 ) { 
+				//	cout << boxout << " -  " << ref << " = " << error <<endl; 
+				//	cout << "DATE: " << it2->first << " g[" << g << "] h1[" << h1 << "] h2[" << h2 << "]" << endl;
+				//}
 				if (abs(error) < abs(err_min)) { err_min  = error;}
 				if (abs(error) > abs(err_max)) { err_max  = error;}
 				++err_num;
 				err_sum += abs(error);
 			}
 		}
-		if (err_num != 0)
-			cout << n << " average of error: " <<  err_sum/((double)err_num) << " N: "<< err_num << "accept " <<  accept_num  << endl;
+		err_sum = err_sum/((double)err_num);
+		err_sum_d = err_sum - err_sum_p;
+		if (err_num != 0) { 
+			cout << n << " average of error: " <<  err_sum << " N: "<< err_num << " accept " <<  accept_num  << endl;
 			cout << "min max error " << err_min << " , " << err_max <<endl;
+			vector<double> tmp;
+			for (set<double>::const_iterator  it = errset.begin(); it != errset.end(); ++it) {
+				tmp.push_back(*it);	
+			}
+			err_med = tmp[errset.size()/2];
+			err_95 = tmp[errset.size()*0.95];
+			cout << "50% error " << tmp[errset.size()/2] <<endl;
+			cout << "80% error " << tmp[errset.size()*0.80] <<endl;
+			cout << "95% error " << tmp[errset.size()*0.95] <<endl;
+		}
 	}
+	cout <<"err_sum_d" << err_sum_d << endl; 
+
+}
+void stock_t::box_testing() {
+	entity_t &e = data[4919][20130531];
+	cout << e.g << " " << e.hly[1] << endl;
+	double boxout = 0.0;
+	for (vector<cell_t>::iterator itc = boxsys.begin(); itc != boxsys.end(); ++itc) { // traverse box system
+		double excite = itc->get_excite_value(e.g, e.hly[1], e.hly[2]);
+		boxout += (itc->get_weight() * excite);
+	}
+
+	cout << "output" << boxout << endl;
+	
 
 }
 
