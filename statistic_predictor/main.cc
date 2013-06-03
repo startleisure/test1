@@ -14,6 +14,11 @@ void format_error() {
 
 int main(int argc, char *argv[])
 {
+
+	vector<double> v1(3,0.0);
+	cell obj(v1, v1);
+	exit(0);
+
 	int id = 0;
 	string boxfileName;
 	enum input_state { NORMAL, ID, BOX, ERROR};

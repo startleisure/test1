@@ -10,6 +10,8 @@
 #include <queue>
 #include <cmath>
 
+#include "cell.h"
+
 using namespace std;
 // design interface , 2013,0601, ChiHsien //
 
@@ -130,6 +132,7 @@ class cell_t {
 	coord center;
 	coord radius;
 };
+
 
 
 #endif
