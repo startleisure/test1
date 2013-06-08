@@ -16,7 +16,7 @@ def debug_print( s, msg = None):
 def get_site( stkID = 2330, month = 1, day = 1, year = 1985, start = 0, num = 30):
 	return 'https://www.google.com/finance/historical?q=TPE:' + \
 				str( stkID ) + '&startdate=' + \
-				str(day) + '/' + str(month) + '/' + str(year) + \
+				str(month) + '/' + str(day) + '/' + str(year) + \
 				'&start=' + str(start) + '&num=' + str(num)
 # testing
 #debug_print(get_site(2485, 1, 31, 1986, 0, 200))
@@ -117,7 +117,7 @@ def write_today_to(outf, idx, date):
 	year = match.groups()[2]
 	#msg1 = "write from today to "+ month + "/"+ day + "/" + year + " for ID: "+ idx + "\n"
 
-	write_fetch_data(outf, idx, 5, 31, 2013)
+	write_fetch_data(outf, idx, month, day, year)
 	#outf.write(msg1)
         
     
@@ -140,9 +140,9 @@ line  = inf.readline()
 while line:
 	idx = check_id_from(line)
 	if (idx is not None):
-		outf.write(line)
+		outf.write(line)  # id line
 
-		line = inf.readline()
+		line = inf.readline()  # next line
 		date = check_date_from(line)
 		write_today_to(outf, idx, date)
 		line = inf.readline()
