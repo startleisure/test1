@@ -63,36 +63,40 @@ int main(int argc, char *argv[])
 	cout << "parse_stock_data" << endl;
     stkobj.parse_stock_data_from_file(ifs, id);
     ifs.close();
+	stkobj.compute_rsi_all(10); // rsi n = 10
+	stkobj.rsi_buy_simulation();
 
+/////////////////////// obs //////////////////////
 	// compute data
-	cout << "comptute_data" << endl;
-	stkobj.compute_gravity_all();
-	stkobj.compute_revenue_all();
+	//cout << "comptute_data" << endl;
+	//stkobj.compute_gravity_all();
+	//stkobj.compute_revenue_all();
 
 	// Create box system or restore
-	if (boxfileName.size() != 0) {
-		cout << "restore box system " << boxfileName << endl;
-		if(stkobj.restore_boxsys(boxfileName.c_str())) {
-			cout << "success!" << endl;
-		} else {
-			cout << "fail!" << endl;
-		}
-	} else {
-		cout << "create_box_system" << endl;
-		stkobj.create_box_system();
-	}
+	//if (boxfileName.size() != 0) {
+	//	cout << "restore box system " << boxfileName << endl;
+	//	if(stkobj.restore_boxsys(boxfileName.c_str())) {
+	//		cout << "success!" << endl;
+	//	} else {
+	//		cout << "fail!" << endl;
+	//	}
+	//} else {
+	//	cout << "create_box_system" << endl;
+	//	stkobj.create_box_system();
+	//}
 
-	cout << "training" << endl;
-	stkobj.box_training();
+	//cout << "training" << endl;
+	//stkobj.box_training();
 
-	cout << "save data: " << convert.str() << endl;
-	stkobj.save_boxsys(convert.str().c_str());
+	//cout << "save data: " << convert.str() << endl;
+	//stkobj.save_boxsys(convert.str().c_str());
 
-	cout << "testing" << endl;
-	stkobj.box_testing(id) ;
+	//cout << "testing" << endl;
+	//stkobj.box_testing(id) ;
+
 //	cout << "print data" << endl;
 //	stkobj.print_boxsys();
-//	stkobj.print_data();
+	//stkobj.print_data();
 
     return 0;
 }

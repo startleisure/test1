@@ -182,6 +182,8 @@ void stock_t::print_data() {
 			entity_t &e = it->second;
 		//	cout << it->first << " " << e.open << " " << e.high << " " << e.low << " " << e.close << " " << e.volume << endl;
 			//cout << it->first << " " << e.close << " " << e.ma[30] << " " << e.ma[72] << " " << e.hly[0] << " " << e.hly[1] << " " << e.hly[2]<< endl;
+
+#if 0
 			cout << it->first << setw(5) 
 				 << " C[" 	<< e.close  
 				 << "]\th[" << e.hly[0] 
@@ -190,9 +192,181 @@ void stock_t::print_data() {
 				 << "]\th2["<< e.hly[2] 
 				 << "]\tR[" << e.revenue 
 				 <<"]" << endl;
+#else 
+			cout << it->first << setw(5) 
+				 << " C[" 	<< e.close  
+				 << "]\tR[" << e.rsi 
+				 <<"]" << endl;
+
+#endif
 		}
 	}
 }
+void stock_t::rsi_buy_simulation() {
+	for (data_map::iterator it = data.begin(); it != data.end(); ++it) {
+		int id = it->first;
+		rsi_buy_simulation_for_id(id);
+	}
+
+}
+void stock_t::rsi_buy_simulation_for_id(int id) {
+	double power = 0.0; // when power >= 100 : buy it,  when power <= -100: sell it , finally day sell all
+	int state= 0; // 0: wait to buy, 1: wait to sell
+	int action = 0; // 1: action to  buy or sell
+	result_entity_t result;
+	double preMaxRSI = 50;
+	double preMinRSI = 50;
+	double buyPrice =  0.0;
+	double sellPrice = 0.0;
+	double posRevenue = 0.0;
+	double negRevenue = 0.0;
+	entity_map &stock_map = data.at(id);
+	for (entity_map::iterator it = stock_map.begin(); it != stock_map.end(); ++it) {
+		entity_t &e = it->second;
+		sellPrice = e.low;
+
+		// action
+		if (action == 1 ) {
+			action = 0;
+			if (state == 0) { // go to buy 
+				result.id = id;
+				result.date_in = it->first;
+				buyPrice = e.high; // worst case
+				state = 1;
+			} else { // go to sell
+				result.date_out = it->first;
+				if (buyPrice != 0.0) {
+					 result.revenue = 100*(sellPrice*0.996 -buyPrice)/buyPrice;
+					if (result.revenue > 0)
+						posRevenue += result.revenue;
+					else {
+						negRevenue += result.revenue;
+					}
+					result_bag.push_back(result);  //   a trade
+					cout << "###################" << endl;
+					cout << "ID " << id << endl;
+					cout << "buy at " << result.date_in << endl;
+					cout << "sel at " << result.date_out << endl;
+					cout << "reven: " << result.revenue << endl;
+					cout << "###################" << endl;
+				}
+				state = 0;
+				preMaxRSI = 50;
+				preMinRSI = 50;
+			}
+		}
+
+		// calculate power
+		if (e.rsi > preMaxRSI*1.05) {
+			if (state == 0) {
+				power -= 30;
+				preMaxRSI = e.rsi;
+		//	} else {
+		//		power -= 10;
+			}
+		} else if (e.rsi > preMaxRSI*0.95) {
+			power += 1;
+		} else if (e.rsi < preMinRSI*0.95) {
+			power += 40;
+			preMinRSI = e.rsi;
+		} else if (e.rsi < preMinRSI*1.05) {
+			power +=5;
+		} else {
+			power -=1;
+		}
+
+		// check power
+		if (power > 100.0 && state == 0) {
+			power = 0.0; 
+			action = 1;
+		} else if (power < -100.0 && state == 1) {
+			power = 0.0;
+			action = 1;
+		}
+	} 
+	
+	if (state = 1) {
+		entity_map::reverse_iterator it  = stock_map.rbegin();
+		result.date_out = it->first;
+		sellPrice = it->second.low; // worst case
+		result.revenue = (sellPrice*0.996 -buyPrice)/buyPrice;
+		if (result.revenue < 0) {
+			negRevenue += result.revenue;
+		}
+		
+		result_bag.push_back(result);
+	}
+	
+	if ((posRevenue + negRevenue) > 1.0 || (negRevenue < -1.0)) {
+		cout << "ID " << id << endl;
+		cout << "Pos Revenue: " <<  posRevenue << endl;
+		cout << "neg Revenue: " << negRevenue << endl;
+	}
+
+}
+void stock_t::compute_rsi_all(int n) {
+	for (data_map::iterator it = data.begin(); it != data.end(); ++it) {
+		int id = it->first;
+		compute_rsi_for(id, n);
+	}
+}
+void stock_t::compute_rsi_for(int id, int n) {
+	entity_map &stock_map = data.at(id);
+	queue<double> queU;
+	queue<double> queD;
+	double sumU = 0.0, sumD = 0.0;
+	double preval = 0.0, diff = 0.0;
+	for (entity_map::iterator it = stock_map.begin(); it != stock_map.end(); ++it) {
+		entity_t &e = it->second;
+		if (queU.size() >= n) {
+			sumU -= queU.front();
+			queU.pop();
+			sumD -= queD.front();
+			queD.pop();
+		}
+	
+		if (it == stock_map.begin()) {
+			diff = 0.0;
+		} else {
+			diff = e.close - preval;
+		}
+
+		// calculate U, D
+		if (diff == 0.0) {
+			queU.push(0.0);
+			queD.push(0.0);
+		} else if(diff > 0.0){
+			sumU += diff;
+			queU.push(diff);	
+			queD.push(0.0);
+		} else {
+			sumD -= diff;
+			queU.push(0.0);
+			queD.push(-diff);
+		}
+
+		// calulate rsi
+		if (queU.size() >= n) {
+			if (sumU == 0.0 && sumD == 0.0) {
+				e.rsi = 50;
+			} else if (sumD == 0.0) {
+				e.rsi = 100;
+			} else if (sumU == 0.0) {
+				e.rsi = 0.0;
+			} else {
+				double ratio = sumU/sumD;
+				e.rsi =  100.0*(1.0 - 1.0/(1.0 + ratio));
+			}
+		} else {
+			e.rsi = 50;
+		}
+
+		preval = e.close;
+	}
+
+}
+
+
 void stock_t::compute_gravity_all() {
 //	stkobj.compute_gravity_for(1101);
 	for (data_map::iterator it = data.begin(); it != data.end(); ++it) {
