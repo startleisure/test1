@@ -15,9 +15,6 @@ void format_error() {
 int main(int argc, char *argv[])
 {
 
-	vector<double> v1(3,0.0);
-	cell obj(v1, v1);
-	exit(0);
 
 	int id = 0;
 	string boxfileName;
@@ -58,6 +55,8 @@ int main(int argc, char *argv[])
 
     ifstream ifs;
     stock_t stkobj;
+	ostringstream convert;
+	convert << "box" << id << ".data";
 
 	// parse file
     ifs.open("stock.data"); 
@@ -80,17 +79,17 @@ int main(int argc, char *argv[])
 		}
 	} else {
 		cout << "create_box_system" << endl;
-	   	stkobj.create_box_system();
+		stkobj.create_box_system();
 	}
 
 	cout << "training" << endl;
 	stkobj.box_training();
 
-	cout << "save data" << endl;
-	stkobj.save_boxsys("boxsys2.data");
+	cout << "save data: " << convert.str() << endl;
+	stkobj.save_boxsys(convert.str().c_str());
 
 	cout << "testing" << endl;
-	stkobj.box_testing() ;
+	stkobj.box_testing(id) ;
 //	cout << "print data" << endl;
 //	stkobj.print_boxsys();
 //	stkobj.print_data();
