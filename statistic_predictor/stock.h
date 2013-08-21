@@ -45,13 +45,15 @@ class stock_t {
 		map<int, double> ma; // ma[30] , ma[72] , ....
 		vector<double> hly; // gravity line hly[0], velocity: hly[1], acceleration: hly[2]
     };
-	struct result_entity_t {
+	struct Trade_t {
 		int id;
 		int date_in;
 		int date_out;
+		double price_in;
+		double price_out;
 		double revenue;
 	};
-	typedef vector<result_entity_t> result_t;
+	typedef vector<Trade_t> result_t;
 	
     typedef map<int, entity_t> entity_map; // map int date, entity e 
     typedef map<int , entity_map> data_map; // map stock_id, stock_data 
@@ -67,6 +69,8 @@ class stock_t {
 	void compute_rsi_all(int n);
 	void rsi_buy_simulation();
 	void rsi_buy_simulation_for_id(int id);
+	void rsi_buy_simulation2_for_id(int id);
+	void report_result();
 
 	void compute_gravity_for(int id);
 	void compute_gravity_all();

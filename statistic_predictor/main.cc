@@ -65,6 +65,7 @@ int main(int argc, char *argv[])
     ifs.close();
 	stkobj.compute_rsi_all(10); // rsi n = 10
 	stkobj.rsi_buy_simulation();
+	stkobj.report_result();
 
 /////////////////////// obs //////////////////////
 	// compute data

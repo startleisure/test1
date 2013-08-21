@@ -202,10 +202,120 @@ void stock_t::print_data() {
 		}
 	}
 }
+void stock_t::report_result() {
+	cout << " report stock simulate Trade Result !!!! " << endl;
+	int id = 0;
+	int posNum = 0, totalPosNum = 0;
+	int negNum = 0, totalNegNum = 0;
+	double MaxRevenue = 0, minRevenue = 0;
+	double sumRevenue = 0;
+	double totalRevenue = 0;
+	
+	for (result_t::iterator it = result_bag.begin(); it != result_bag.end(); ++it){
+		if (it->id == id) {
+
+		} else {
+			if (id != 0) {
+				cout << "ID: " << id << endl;
+				cout << "Max: " << MaxRevenue << endl;
+				cout << "min: " << minRevenue << endl;
+				cout << "revenue: " << sumRevenue << endl;
+				cout << "win ratio: " << posNum << "/" << negNum << endl;
+			}
+			id = it->id;
+			posNum = negNum = 0;
+			MaxRevenue = 0, minRevenue = 0, sumRevenue = 0;
+		}
+
+		if (it->revenue > MaxRevenue) {
+			MaxRevenue = it->revenue;
+		} else {
+			minRevenue = it->revenue;
+		}
+		if (it->revenue > 0) {
+			posNum ++;
+			totalPosNum ++;
+		} else {
+			negNum ++;
+			totalNegNum ++;
+		}
+
+		sumRevenue += it->revenue;
+		totalRevenue += it->revenue;
+
+	}
+	cout << "Total Statistics: " << endl;
+	cout << "TotalTradeNum: " << totalPosNum+totalNegNum << endl;
+	double ratio = ((double)totalPosNum) / (double) (totalPosNum + totalNegNum);
+	cout << "Positive ratio: " <<  ratio << endl;
+	cout << "final revenue = " << totalRevenue << endl;
+
+}
 void stock_t::rsi_buy_simulation() {
 	for (data_map::iterator it = data.begin(); it != data.end(); ++it) {
 		int id = it->first;
 		rsi_buy_simulation_for_id(id);
+		//rsi_buy_simulation2_for_id(id);
+	}
+}
+void stock_t::rsi_buy_simulation2_for_id(int id) {
+	entity_map &stock_map = data.at(id);
+	Trade_t trade;
+	double buyPrice =  0.0;
+	double sellPrice = 0.0;
+	int state= 0; // 0: wait to buy, 1: wait to sell
+	int action = 0; // 1: action to  buy or sell
+	for (entity_map::iterator it = stock_map.begin(); it != stock_map.end(); ++it) {
+		entity_t &e = it->second;
+		sellPrice = e.low;
+		// action
+		if (action == 1 ) {
+			action = 0;
+			if (state == 0) { // go to buy 
+				trade.id = id;
+				trade.date_in = it->first;
+				buyPrice = e.high; // worst case
+				state = 1; 
+			} else { // go to sell
+				trade.date_out = it->first;
+				if (buyPrice != 0.0) {
+					trade.revenue = 100*(sellPrice*0.996 -buyPrice)/buyPrice;
+					result_bag.push_back(trade);  //   a trade
+					//cout << "###################" << endl;
+					//cout << "ID " << id << endl;
+					//cout << "buy at " << trade.date_in << endl;
+					//cout << "sel at " << trade.date_out << endl;
+					//cout << "reven: " << trade.revenue << endl;
+					//cout << "###################" << endl;
+				}
+				state = 0;
+			}
+		}
+		if (e.rsi < 30 ) {
+			action = 1;
+		} else if (e.rsi > 70) {
+			action = 1;
+		}
+
+		// lose stop  -10%
+		if (state == 1) {
+			trade.revenue = 100*(sellPrice*0.996 -buyPrice)/buyPrice;
+			if (trade.revenue < -10) {
+				trade.date_out = it->first;
+				result_bag.push_back(trade);  //   a trade
+				state = 0;
+				action = 0;
+			} 
+		}
+
+
+	}
+	if (state = 1 && buyPrice > 0.0) {
+		entity_map::reverse_iterator it  = stock_map.rbegin();
+		trade.date_out = it->first;
+		sellPrice = it->second.low; // worst case
+		trade.revenue = (sellPrice*0.996 -buyPrice)/buyPrice;
+		result_bag.push_back(trade);
 	}
 
 }
@@ -213,7 +323,7 @@ void stock_t::rsi_buy_simulation_for_id(int id) {
 	double power = 0.0; // when power >= 100 : buy it,  when power <= -100: sell it , finally day sell all
 	int state= 0; // 0: wait to buy, 1: wait to sell
 	int action = 0; // 1: action to  buy or sell
-	result_entity_t result;
+	Trade_t trade;
 	double preMaxRSI = 50;
 	double preMinRSI = 50;
 	double buyPrice =  0.0;
@@ -229,26 +339,28 @@ void stock_t::rsi_buy_simulation_for_id(int id) {
 		if (action == 1 ) {
 			action = 0;
 			if (state == 0) { // go to buy 
-				result.id = id;
-				result.date_in = it->first;
+				trade.id = id;
+				trade.date_in = it->first;
 				buyPrice = e.high; // worst case
 				state = 1;
 			} else { // go to sell
-				result.date_out = it->first;
+				trade.date_out = it->first;
 				if (buyPrice != 0.0) {
-					 result.revenue = 100*(sellPrice*0.996 -buyPrice)/buyPrice;
-					if (result.revenue > 0)
-						posRevenue += result.revenue;
+					trade.revenue = 100*(sellPrice*0.996 -buyPrice)/buyPrice;
+					if (trade.revenue > 0)
+						posRevenue += trade.revenue;
 					else {
-						negRevenue += result.revenue;
+						negRevenue += trade.revenue;
 					}
-					result_bag.push_back(result);  //   a trade
-					cout << "###################" << endl;
-					cout << "ID " << id << endl;
-					cout << "buy at " << result.date_in << endl;
-					cout << "sel at " << result.date_out << endl;
-					cout << "reven: " << result.revenue << endl;
-					cout << "###################" << endl;
+					if (trade.revenue < 1000) {
+						result_bag.push_back(trade);  //   a trade
+						cout << "###################" << endl;
+						cout << "ID " << id << endl;
+						cout << "buy at " << trade.date_in << endl;
+						cout << "sel at " << trade.date_out << endl;
+						cout << "reven: " << trade.revenue << endl;
+						cout << "###################" << endl;
+					}
 				}
 				state = 0;
 				preMaxRSI = 50;
@@ -259,18 +371,18 @@ void stock_t::rsi_buy_simulation_for_id(int id) {
 		// calculate power
 		if (e.rsi > preMaxRSI*1.05) {
 			if (state == 0) {
-				power -= 30;
+				power += 30;
 				preMaxRSI = e.rsi;
-		//	} else {
-		//		power -= 10;
+			} else {
+				power += 10;
 			}
 		} else if (e.rsi > preMaxRSI*0.95) {
 			power += 1;
 		} else if (e.rsi < preMinRSI*0.95) {
-			power += 40;
+			power -= 30;
 			preMinRSI = e.rsi;
 		} else if (e.rsi < preMinRSI*1.05) {
-			power +=5;
+			power -=5;
 		} else {
 			power -=1;
 		}
@@ -283,18 +395,29 @@ void stock_t::rsi_buy_simulation_for_id(int id) {
 			power = 0.0;
 			action = 1;
 		}
+
+		// lose stop  -1%
+		if (state == 1) {
+			trade.revenue = 100*(sellPrice*0.996 -buyPrice)/buyPrice;
+			if (trade.revenue < -10) {
+				trade.date_out = it->first;
+				result_bag.push_back(trade);  //   a trade
+				state = 0;
+				action = 0;
+			} 
+		}
 	} 
 	
-	if (state = 1) {
+	if (state = 1 && buyPrice > 0.0) {
 		entity_map::reverse_iterator it  = stock_map.rbegin();
-		result.date_out = it->first;
+		trade.date_out = it->first;
 		sellPrice = it->second.low; // worst case
-		result.revenue = (sellPrice*0.996 -buyPrice)/buyPrice;
-		if (result.revenue < 0) {
-			negRevenue += result.revenue;
+		trade.revenue = (sellPrice*0.996 -buyPrice)/buyPrice;
+		if (trade.revenue < 0) {
+			negRevenue += trade.revenue;
 		}
 		
-		result_bag.push_back(result);
+		result_bag.push_back(trade);
 	}
 	
 	if ((posRevenue + negRevenue) > 1.0 || (negRevenue < -1.0)) {
