@@ -63,8 +63,18 @@ int main(int argc, char *argv[])
 	cout << "parse_stock_data" << endl;
     stkobj.parse_stock_data_from_file(ifs, id);
     ifs.close();
+
+	// compute more analysis data
+	cout << "comptute_gravity" << endl;
+	stkobj.compute_gravity_all();
+	cout << "comptute_rsi" << endl;
 	stkobj.compute_rsi_all(10); // rsi n = 10
+
+	cout << "Trade Simulation" << endl;
+	// trade simulation 
 	stkobj.rsi_buy_simulation();
+
+	// report result
 	stkobj.report_result();
 
 /////////////////////// obs //////////////////////

@@ -68,8 +68,9 @@ class stock_t {
 	void compute_rsi_for(int id, int n);
 	void compute_rsi_all(int n);
 	void rsi_buy_simulation();
-	void rsi_buy_simulation_for_id(int id);
-	void rsi_buy_simulation2_for_id(int id);
+	void trade_simulation_for_id(int id);
+	void trade_id_date(int id, entity_map::iterator curr);
+	bool TradeModel(entity_map::iterator start, entity_map::iterator curr);
 	void report_result();
 
 	void compute_gravity_for(int id);
