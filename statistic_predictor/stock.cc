@@ -1,6 +1,11 @@
 #include "stock.h"
 #include <iomanip>
 
+#define SELL_IN_NDAYS 40   // sell the stock in N days
+#define ANALYSIS_BY_N 60   // based on N days data to decide whether to buy or not
+#define STOP_NEG_REVENUE -10
+#define STOP_POS_REVENUE 20
+
 
 
 namespace stock {
@@ -202,7 +207,10 @@ void stock_t::print_data() {
 		}
 	}
 }
-void stock_t::report_result() {
+void stock_t::clear_result() {
+	result_bag.clear();
+}
+void stock_t::report_result(double &theRatio, double &theRevenue) {
 	cout << " report stock simulate Trade Result !!!! " << endl;
 	int id = 0;
 	int posNum = 0, totalPosNum = 0;
@@ -216,11 +224,11 @@ void stock_t::report_result() {
 
 		} else {
 			if (id != 0) {
-				cout << "ID: " << id << endl;
-				cout << "Max: " << MaxRevenue << endl;
-				cout << "min: " << minRevenue << endl;
-				cout << "revenue: " << sumRevenue << endl;
-				cout << "win ratio: " << posNum << "/" << negNum << endl;
+			//	cout << "ID: " << id << endl;
+			//	cout << "Max: " << MaxRevenue << endl;
+			//	cout << "min: " << minRevenue << endl;
+			//	cout << "revenue: " << sumRevenue << endl;
+			//	cout << "win ratio: " << posNum << "/" << negNum << endl;
 			}
 			id = it->id;
 			posNum = negNum = 0;
@@ -244,11 +252,21 @@ void stock_t::report_result() {
 		totalRevenue += it->revenue;
 
 	}
+	double totalTradeNum = totalPosNum + totalNegNum;
+	if (totalTradeNum <= 0.1) { 
+		theRatio = 0;
+		theRevenue = -99;
+		return;
+	}  
+	theRatio= ((double)totalPosNum) / totalTradeNum;
+	theRevenue = totalRevenue/ totalTradeNum;
+
 	cout << "Total Statistics: " << endl;
 	cout << "TotalTradeNum: " << totalPosNum+totalNegNum << endl;
-	double ratio = ((double)totalPosNum) / (double) (totalPosNum + totalNegNum);
-	cout << "Positive ratio: " <<  ratio << endl;
-	cout << "final avg revenue = " << totalRevenue/(totalPosNum+totalNegNum) << endl;
+	cout << "Positive ratio: " <<  theRatio << endl;
+	cout << "Final avg revenue = " << theRevenue << endl;
+
+
 
 }
 void stock_t::rsi_buy_simulation() {
@@ -279,11 +297,18 @@ void stock_t::trade_id_date(int id, entity_map::iterator curr) {
 	target++;
 
 	if (target == stock_map.end()) return;
-	if (curr->second.g > 1 || curr->second.g < -1) {
+	//if (curr->second.g > 5 || curr->second.hly[1] < 0.0 || curr->second.hly[2] < 0.00 || !(curr->second.hly[1] > 0.1 && curr->second.g < -1)) 
+	//  stock reject
+	double gStart = -2;
+	double gDelta = 1;
+	if (!(curr->second.g > gStart && curr->second.g < gStart+gDelta && 
+		  curr->second.hly[1] > hly1Start && curr->second.hly[1] < hly2Start+hly1Delta &&
+		  curr->second.hly[2] > hly2Start && curr->second.hly[2] < hly2Start+hly2Delta )) 
+	{
 		return;
 	}
 
-	int Np = 60; // 60 days to analysis to decide 
+	int Np = ANALYSIS_BY_N; // 60 days to analysis to decide 
 	for (int i = 0; i<Np; ++i) {
 		if (start == stock_map.begin()) 
 			return; // not enough days to predict
@@ -331,24 +356,27 @@ void stock_t::trade_id_date(int id, entity_map::iterator curr) {
 	if (buyPrice == 0.0) return; // do not buy
 	power = 0; // reset 
 
+	int counter = 0; // sell in N days
+	int Nsell = SELL_IN_NDAYS;
 	// decision to sell
 	for (entity_map::iterator it = target; it!= stock_map.end(); ++it) {
+		counter ++;
 		entity_t &e = it->second;
 		sellPrice = e.low;
 		trade.revenue = 100*(sellPrice*0.996 -buyPrice)/buyPrice;
 
-		if (sellAct == 1) {
+		if (sellAct == 1 || counter >= Nsell) {
 			trade.date_out = it->first;
 			result_bag.push_back(trade);  //   a trade sell
 			return;
 		}
 
 		// lose stop  -10%, gain stop +20%
-		if (trade.revenue < -10) {
+		if (trade.revenue < STOP_NEG_REVENUE) {
 			trade.date_out = it->first;
 			result_bag.push_back(trade);  //   a trade sell
 			return;
-		}  else if (trade.revenue > 20) {
+		}  else if (trade.revenue > STOP_POS_REVENUE) {
 			trade.date_out = it->first;
 			result_bag.push_back(trade);  //   a trade sell
 			return;

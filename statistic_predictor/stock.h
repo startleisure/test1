@@ -13,6 +13,13 @@
 
 #include "cell.h"
 
+extern double gStart;
+extern double gDelta;
+extern double hly1Start;
+extern double hly1Delta;
+extern double hly2Start;
+extern double hly2Delta;
+
 using namespace std;
 // design interface , 2013,0601, ChiHsien //
 
@@ -71,7 +78,8 @@ class stock_t {
 	void trade_simulation_for_id(int id);
 	void trade_id_date(int id, entity_map::iterator curr);
 	bool TradeModel(entity_map::iterator start, entity_map::iterator curr);
-	void report_result();
+	void report_result(double &theRatio, double &theRevenue);
+	void clear_result();
 
 	void compute_gravity_for(int id);
 	void compute_gravity_all();
@@ -154,6 +162,25 @@ class cell_t {
 	coord radius;
 };
 
+class ghlySet_t {
+	public:
+		double g;
+		double hly1;
+		double hly2;
+		double val;
+		ghlySet_t() {
+			g = -99;
+			hly1 = -99;
+			hly2 = -99;
+			val = -99 ;
+		}
+		void set(double ig, double ihly1, double ihly2, double ival) {
+			g = ig; hly1 = ihly1; hly2 = ihly2; val  =  ival;
+		}
+		void report(){
+			cout << "(" << g << ", " << hly1 << ", " << hly2 << ") : val = " << val << endl;
+		}
+};
 
 
 #endif

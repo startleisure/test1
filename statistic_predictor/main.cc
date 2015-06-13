@@ -6,6 +6,13 @@
 
 #include "stock.h"
 
+double gStart;
+double gDelta;
+double hly1Start;
+double hly1Delta;
+double hly2Start;
+double hly2Delta;
+
 void format_error() {
 	cout << "error format" << endl;
 	cout << "format : a.out -id num -box fileName" << endl;
@@ -72,10 +79,43 @@ int main(int argc, char *argv[])
 
 	cout << "Trade Simulation" << endl;
 	// trade simulation 
-	stkobj.rsi_buy_simulation();
+
+	gDelta = 1;
+	hly1Delta = 0.2;
+	hly2Delta = 0.02;
+
+	double tmpRatio = 0, tmpRevenue = -100;
+	ghlySet_t bestRevenue, bestRatio;
+
+	for (gStart = -10 ; gStart <10; gStart+=gDelta) {
+		for (hly1Start = -1; hly1Start < 1; hly1Start+=hly1Delta){
+			for (hly2Start = -0.1; hly2Start < 0.1; hly2Start+=hly2Delta){
+				cout << "Simulation for (" << gStart << "," << hly1Start << "," << hly2Start << ")" << endl;
+				stkobj.rsi_buy_simulation();
+				stkobj.report_result(tmpRatio, tmpRevenue);
+				stkobj.clear_result();
+
+				if (tmpRatio > bestRatio.val) {
+					bestRatio.set(gStart, hly1Start, hly2Start, tmpRatio);
+				}
+				if (tmpRevenue > bestRevenue.val) {
+					bestRevenue.set(gStart, hly1Start, hly2Start, tmpRevenue);
+				}
+				cout << "#########################################\n" << endl;
+			}
+		}
+	}
+
+	cout << "report best Revenue set" << endl;
+	bestRevenue.report();
+	cout << "report best Ratio set" << endl;
+	bestRatio.report();
+
+	cout << "END!!" << endl;
+
 
 	// report result
-	stkobj.report_result();
+	//stkobj.report_result();
 
 /////////////////////// obs //////////////////////
 	// compute data
