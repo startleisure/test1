@@ -240,7 +240,7 @@ void stock_t::report_result(double &theRatio, double &theRevenue) {
 			MaxRevenue = 0, minRevenue = 0, sumRevenue = 0;
 		}
         if (id == 3058)
-            cout << "ID: "<< id << "date " << it->date_out << "--" << it->date_in << ", price: " << it->price_out << " - " << it->price_in << ", revenue: " << it->revenue << endl;
+            cout << "ID: "<< id << ", date " << it->date_in<< "--" << it->date_out<< ", price: " << it->price_in<< " - " << it->price_out << ", revenue: " << it->revenue << endl;
 
 		if (it->revenue > MaxRevenue) {
 			MaxRevenue = it->revenue;
@@ -504,6 +504,7 @@ void stock_t::KDJ_trade_for_id(int id) {
     enum stock_trade_state {STOCK_EMPTY, STOCK_HOLD};
 	entity_map &stock_map = data.at(id);
     stock_trade_state state = STOCK_EMPTY;
+    int duration = 0;
 
     trade.id = id;
     trade.hold_num = 0;
@@ -519,11 +520,13 @@ void stock_t::KDJ_trade_for_id(int id) {
                     trade.date_in = date;
                     trade.price_in = e.high;
                     state = STOCK_HOLD;
+                    duration = 0;
                 } 
                 break;
             case STOCK_HOLD:
                 // decide whether to sell
-                if (KDJ_decision_sell(id, date) == true) {
+                duration++;
+                if (KDJ_decision_sell(id, date) == true || duration > 30) {
                     trade.hold_num = 0;
                     trade.date_out = date;
                     trade.price_out = e.low;
@@ -545,15 +548,23 @@ bool stock_t::KDJ_decision_buy(int id, int date) {
     delta_k = e.k - e.kp;
     delta_d = e.d - e.dp;
     J = 3*e.k - 2*e.d;
-    if (next_time_buy == 1) {
-        next_time_buy = 0;
-        return true; // buy at this moment;
-    }
-
     // buy condition
-    if (e.kp < e.dp && e.k > e.d )//&& delta_k > 0 && delta_d > 0)
-    {
-        next_time_buy = 1;
+    switch (next_time_buy) {
+        case 0:
+            if (e.kp < e.dp && e.k > e.d && delta_k > 0 && delta_d > 0)
+            {
+                next_time_buy = 1;
+            }
+            break;
+        case 1:
+            if (e.kp > e.dp && e.k > e.d && delta_k > 0 && delta_d > 0)
+            {
+                next_time_buy = 2;
+            }
+            break;
+        case 2:
+            next_time_buy = 0;
+            return true; // buy at this moment;
     }
 
 
@@ -566,16 +577,25 @@ bool stock_t::KDJ_decision_sell(int id, int date) {
     delta_k = e.k - e.kp;
     delta_d = e.d - e.dp;
     J = 3*e.k - 2*e.d;
-    if (next_time_sell == 1) {
-        next_time_sell = 0;
-        return true; // buy at this moment;
-    }
     // sell condition
-    if (e.kp > e.dp && e.k < e.d)
-    {
-        next_time_sell = 1;
-    }
+    switch (next_time_sell) {
+        case 0:
+            if (/*(e.kp < e.dp && e.k < e.d) ||*/
+                (e.kp > e.dp && e.k < e.d  && e.k > 70) ||
+                (delta_k < 0 && e.k > 70) ) 
+            {
+                //cout << "chdebug : " << delta_k << ", " << delta_d << endl;
+                next_time_sell = 1;
+            }
+            break;
+        case 1:
+            next_time_sell = 0;
+            return true; // buy at this moment;
+        case 2:
+            break;
+        
 
+    }
     return false;
 }
 
