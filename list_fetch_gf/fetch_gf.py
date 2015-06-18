@@ -94,6 +94,7 @@ def write_fetch_data(fileName, stock_id = 0):
     
 
 #### Main ####
+
 f = open("id_list")
 data = f.read()
 
@@ -106,7 +107,8 @@ opener.addheaders = [('User-agent', 'Mozilla/5.0')]
 
 #stock_ids = range(9999)
 #stock_ids = (1111, 2330, 2485)
-stock_ids = data.split()
+#stock_ids = data.split()
+stock_ids = range(3000, 3100)
 
 print 'Start Fetch!'
 for stock_id in stock_ids:  # fetch all

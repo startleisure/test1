@@ -49,6 +49,13 @@ pattern_total_size = r'google\.finance\.applyPagination\(\s+\d+,\s+\d+,\s+(\d+),
 reg_row_size =  re.compile( pattern_total_size )
 
 def write_fetch_data(fileName, stock_id = 0):
+    if(stock_id< 100):
+        tmpstr = '00' + str(stock_id)
+    elif (stock_id< 1000):
+        return None
+    else:
+        tmpstr = str(stock_id)
+
     f = open( fileName, 'a')
     #if stock_id < 1000 :
     #    return None
@@ -58,12 +65,12 @@ def write_fetch_data(fileName, stock_id = 0):
 
     match_r_sz = reg_row_size.search( content )
     if (match_r_sz is None):
-        print "stock_id: "+ str(stock_id) + " not found! "
+        print "stock_id: "+ tmpstr + " not found! "
         return None
 
     ## write ID SZ line
     row_size = int (match_r_sz.groups()[0])
-    id_line = "*ID " + str(stock_id) + " *SZ " + str(row_size) + "\n"
+    id_line = "*ID " + tmpstr + " *SZ " + str(row_size) + "\n"
     print id_line
     f.write(id_line)
     
@@ -80,7 +87,7 @@ def write_fetch_data(fileName, stock_id = 0):
         stock_data = reg_price.findall( cnt )
         length = len(stock_data)
         if (length is 0 ):
-            print "stock_id: "+ str(stock_id) + " not found! "
+            print "stock_id: "+ tmpstr + " not found! "
             return None
         else:
             print length

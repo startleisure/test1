@@ -72,46 +72,49 @@ int main(int argc, char *argv[])
     ifs.close();
 
 	// compute more analysis data
-	cout << "comptute_gravity" << endl;
-	stkobj.compute_gravity_all();
-	cout << "comptute_rsi" << endl;
-	stkobj.compute_rsi_all(10); // rsi n = 10
+	cout << "comptute_KDJ" << endl;
+    stkobj.compute_KDJ_all();
+
+	//cout << "comptute_gravity" << endl;
+	//stkobj.compute_gravity_all();
+	//cout << "comptute_rsi" << endl;
+	//stkobj.compute_rsi_all(10); // rsi n = 10
 
 	cout << "Trade Simulation" << endl;
 	// trade simulation 
 
-	gDelta = 1;
-	hly1Delta = 0.2;
-	hly2Delta = 0.02;
+	//gDelta = 1;
+	//hly1Delta = 0.2;
+	//hly2Delta = 0.02;
 
-	double tmpRatio = 0, tmpRevenue = -100;
-	ghlySet_t bestRevenue, bestRatio;
+	//double tmpRatio = 0, tmpRevenue = -100;
+	//ghlySet_t bestRevenue, bestRatio;
 
-	for (gStart = -10 ; gStart <10; gStart+=gDelta) {
-		for (hly1Start = -1; hly1Start < 1; hly1Start+=hly1Delta){
-			for (hly2Start = -0.1; hly2Start < 0.1; hly2Start+=hly2Delta){
-				cout << "Simulation for (" << gStart << "," << hly1Start << "," << hly2Start << ")" << endl;
-				stkobj.rsi_buy_simulation();
-				stkobj.report_result(tmpRatio, tmpRevenue);
-				stkobj.clear_result();
+	//for (gStart = -10 ; gStart <10; gStart+=gDelta) {
+	//	for (hly1Start = -1; hly1Start < 1; hly1Start+=hly1Delta){
+	//		for (hly2Start = -0.1; hly2Start < 0.1; hly2Start+=hly2Delta){
+	//			cout << "Simulation for (" << gStart << "," << hly1Start << "," << hly2Start << ")" << endl;
+	//			stkobj.rsi_buy_simulation();
+	//			stkobj.report_result(tmpRatio, tmpRevenue);
+	//			stkobj.clear_result();
 
-				if (tmpRatio > bestRatio.val) {
-					bestRatio.set(gStart, hly1Start, hly2Start, tmpRatio);
-				}
-				if (tmpRevenue > bestRevenue.val) {
-					bestRevenue.set(gStart, hly1Start, hly2Start, tmpRevenue);
-				}
-				cout << "#########################################\n" << endl;
-			}
-		}
-	}
+	//			if (tmpRatio > bestRatio.val) {
+	//				bestRatio.set(gStart, hly1Start, hly2Start, tmpRatio);
+	//			}
+	//			if (tmpRevenue > bestRevenue.val) {
+	//				bestRevenue.set(gStart, hly1Start, hly2Start, tmpRevenue);
+	//			}
+	//			cout << "#########################################\n" << endl;
+	//		}
+	//	}
+	//}
 
-	cout << "report best Revenue set" << endl;
-	bestRevenue.report();
-	cout << "report best Ratio set" << endl;
-	bestRatio.report();
+	//cout << "report best Revenue set" << endl;
+	//bestRevenue.report();
+	//cout << "report best Ratio set" << endl;
+	//bestRatio.report();
 
-	cout << "END!!" << endl;
+	//cout << "END!!" << endl;
 
 
 	// report result
@@ -147,7 +150,7 @@ int main(int argc, char *argv[])
 
 //	cout << "print data" << endl;
 //	stkobj.print_boxsys();
-	//stkobj.print_data();
+	stkobj.print_data();
 
     return 0;
 }

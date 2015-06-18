@@ -200,7 +200,8 @@ void stock_t::print_data() {
 #else 
 			cout << it->first << setw(5) 
 				 << " C[" 	<< e.close  
-				 << "]\tR[" << e.rsi 
+				 << "]\tK[" << e.k
+				 << "]\tD[" << e.d
 				 <<"]" << endl;
 
 #endif
@@ -486,6 +487,12 @@ void stock_t::compute_rsi_for(int id, int n) {
 
 }
 
+void stock_t::compute_KDJ_all() {
+	for (data_map::iterator it = data.begin(); it != data.end(); ++it) {
+		int id = it->first;
+        compute_KDJ_for(id, 9);
+    }
+}
 
 void stock_t::compute_gravity_all() {
 //	stkobj.compute_gravity_for(1101);
@@ -543,6 +550,55 @@ void stock_t::compute_gravity_for(int id) { // HLY formula
 		}
 	}
 	
+}
+
+// KDJ test
+void stock_t::compute_KDJ_for(int id, int t) {
+	if (t <= 1) { 
+        return; 
+    }
+
+    double high, low, close, rsv, k_previous, d_previous;
+	entity_map &stock_map = data.at(id);
+    list<entity_t> list1;
+
+	for (entity_map::iterator it = stock_map.begin(); it != stock_map.end(); ++it) {
+		entity_t &e = it->second;
+        // keep t duration data
+		if (list1.size() >= t) {
+			list1.pop_front();
+        }
+		list1.push_back(e);
+
+        // calculate high , low, close from list1
+        if (list1.size() == t)
+        {
+            high = e.high;
+            low  = e.low;
+            close = e.close;
+            for (list<entity_t>::iterator it2 = list1.begin(); it2 != list1.end(); ++it2)
+            {
+                if (it2->high > high)
+                    high = it2->high;
+                if (it2->low < low)
+                    low = it2->low;
+            }
+            if (high != low) {
+                rsv = (close - low)*100/(high - low);
+            } else {
+                rsv = 50.0;
+            }
+            e.k = k_previous*2/3 + rsv/3;
+            e.d = d_previous*2/3 + e.k/3;
+
+            // find lowest in duration t
+        } else {
+            e.k = 50.0; // init K = D = 50.0
+            e.d = 50.0;
+        }
+        k_previous = e.k;
+        d_previous = e.d;
+	}
 }
 
 void stock_t::compute_ma_for(int id, int t) {

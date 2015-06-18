@@ -8,6 +8,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <queue>
+#include <list>
 #include <cmath>
 #include <sstream>
 
@@ -46,6 +47,7 @@ class stock_t {
 		}
         double open, high, low, close;
 		double g; // (v/hly[0] -1 )*100 
+        double k, d; //, rsv, high9, low9; // KD test
 		double revenue;
         int volume;
 		double rsi;
@@ -87,6 +89,10 @@ class stock_t {
 	void compute_velocity();
 	void compute_revenue_all(); // revenue at +t days when buy at (id, date)
 	void compute_revenue_for(int id, int date, int t); // revenue at +t days when buy at (id, date)
+
+    // KDJ test
+	void compute_KDJ_all();
+    void compute_KDJ_for(int id, int t);
 	
 	void print_data();
 	void create_box_system();
