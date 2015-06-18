@@ -14,9 +14,15 @@ def debug_print( s, msg = None):
 #  get url 
 #  https://www.google.com/finance/historical?q=TPE:2330&startdate=1/31/1986&start=30&num=30
 def get_site( stkID = 2330, month = 1, day = 1, year = 1985, start = 0, num = 30):
+	if (stkID < 100):
+		tmpstr = '00' + str(stkID)
+	elif (stkID < 1000):
+		tmpstr = '0' + str(stkID)
+	else:
+		tmpstr = str(stkID)
 	return 'https://www.google.com/finance/historical?q=TPE:' + \
-				str( stkID ) + '&startdate=' + \
-				str(day) + '/' + str(month) + '/' + str(year) + \
+				tmpstr + '&startdate=' + \
+				str(month) + '/' + str(day) + '/' + str(year) + \
 				'&start=' + str(start) + '&num=' + str(num)
 # testing
 #debug_print(get_site(2485, 1, 31, 1986, 0, 200))
@@ -44,8 +50,8 @@ reg_row_size =  re.compile( pattern_total_size )
 
 def write_fetch_data(fileName, stock_id = 0):
     f = open( fileName, 'a')
-    if stock_id < 1000 :
-        return None
+    #if stock_id < 1000 :
+    #    return None
     # Get web page content
     urlsite = get_site(stock_id, 1, 31, 1986, 0, 200)
     content = opener.open( urlsite ).read()
