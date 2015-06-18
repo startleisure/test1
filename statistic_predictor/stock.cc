@@ -224,17 +224,21 @@ void stock_t::report_result(double &theRatio, double &theRevenue) {
 		if (it->id == id) {
 
 		} else {
-			if (id != 0) {
-			//	cout << "ID: " << id << endl;
-			//	cout << "Max: " << MaxRevenue << endl;
-			//	cout << "min: " << minRevenue << endl;
-			//	cout << "revenue: " << sumRevenue << endl;
-			//	cout << "win ratio: " << posNum << "/" << negNum << endl;
-			}
+			if (id != 0 ) {
+				cout << "ID: " << id << endl;
+				cout << "Max: " << MaxRevenue << endl;
+				cout << "min: " << minRevenue << endl;
+				cout << "revenue: " << sumRevenue << endl;
+                cout << "TradeNum: " << (negNum + posNum) << endl;
+				cout << "Pos ratio: " << ((double)posNum)/(negNum + posNum) << endl;
+                cout << "===================================================" << endl;
+			} 
 			id = it->id;
 			posNum = negNum = 0;
 			MaxRevenue = 0, minRevenue = 0, sumRevenue = 0;
 		}
+        //if (id == 3058)
+        //    cout << "ID: "<< id << "date " << it->date_out << "--" << it->date_in << ", price: " << it->price_out << " - " << it->price_in << ", revenue: " << it->revenue << endl;
 
 		if (it->revenue > MaxRevenue) {
 			MaxRevenue = it->revenue;
@@ -485,6 +489,69 @@ void stock_t::compute_rsi_for(int id, int n) {
 		preval = e.close;
 	}
 
+}
+void stock_t::KDJ_buy_simulation() {
+	cout << "Trade Simulation" << endl;
+	for (data_map::iterator it = data.begin(); it != data.end(); ++it) {
+		int id = it->first;
+		KDJ_trade_for_id(id);
+	}
+}
+void stock_t::KDJ_trade_for_id(int id) {
+	Trade_t trade;
+    enum stock_trade_state {STOCK_EMPTY, STOCK_HOLD};
+	entity_map &stock_map = data.at(id);
+    stock_trade_state state = STOCK_EMPTY;
+
+    trade.id = id;
+    trade.hold_num = 0;
+	for (entity_map::iterator it = stock_map.begin(); it != stock_map.end(); ++it) {
+        int date = it->first;
+		entity_t &e = it->second;
+        // if Decide to buy , => hold state
+        switch (state){
+            case STOCK_EMPTY:
+                // decide whether to buy
+                if (KDJ_decision_buy(id, date) == true) {
+                    trade.hold_num = 1;
+                    trade.date_in = date;
+                    trade.price_in = e.high;
+                    state = STOCK_HOLD;
+                } 
+                break;
+            case STOCK_HOLD:
+                // decide whether to sell
+                if (KDJ_decision_sell(id, date) == true) {
+                    trade.hold_num = 0;
+                    trade.date_out = date;
+                    trade.price_out = e.low;
+                    trade.revenue = 100*(trade.price_out*0.996 - trade.price_in)/trade.price_in;
+                    state = STOCK_EMPTY;
+                    result_bag.push_back(trade);  //   a trade sell
+                } 
+                break;
+        }
+	}
+}
+int chtest = 0;
+bool stock_t::KDJ_decision_buy(int id, int date) {
+    if (chtest< 100) {
+        chtest++;
+    } else {
+        chtest= 0;
+        return true; 
+    }
+    return false;
+}
+bool stock_t::KDJ_decision_sell(int id, int date) {
+    if (chtest< 100) {
+        chtest++;
+    } else {
+        chtest= 0;
+        return true; 
+    }
+
+    return false;
 }
 
 void stock_t::compute_KDJ_all() {

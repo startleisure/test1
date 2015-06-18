@@ -80,8 +80,13 @@ int main(int argc, char *argv[])
 	//cout << "comptute_rsi" << endl;
 	//stkobj.compute_rsi_all(10); // rsi n = 10
 
-	cout << "Trade Simulation" << endl;
 	// trade simulation 
+    stkobj.KDJ_buy_simulation();
+    
+    // Report Result
+	double tmpRatio = 0, tmpRevenue = -100;
+    stkobj.report_result(tmpRatio, tmpRevenue);
+	stkobj.clear_result();
 
 	//gDelta = 1;
 	//hly1Delta = 0.2;
@@ -150,7 +155,8 @@ int main(int argc, char *argv[])
 
 //	cout << "print data" << endl;
 //	stkobj.print_boxsys();
-	stkobj.print_data();
+
+//  stkobj.print_data();
 
     return 0;
 }

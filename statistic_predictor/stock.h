@@ -56,6 +56,7 @@ class stock_t {
     };
 	struct Trade_t {
 		int id;
+        int hold_num;
 		int date_in;
 		int date_out;
 		double price_in;
@@ -91,6 +92,10 @@ class stock_t {
 	void compute_revenue_for(int id, int date, int t); // revenue at +t days when buy at (id, date)
 
     // KDJ test
+	void KDJ_buy_simulation();
+    void KDJ_trade_for_id(int id);
+    bool KDJ_decision_buy(int id, int date);
+    bool KDJ_decision_sell(int id, int date);
 	void compute_KDJ_all();
     void compute_KDJ_for(int id, int t);
 	
