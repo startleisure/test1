@@ -202,6 +202,8 @@ void stock_t::print_data() {
 				 << " C[" 	<< e.close  
 				 << "]\tK[" << e.k
 				 << "]\tD[" << e.d
+				 << "]\tKp[" << e.kp
+				 << "]\tDp[" << e.dp
 				 <<"]" << endl;
 
 #endif
@@ -237,8 +239,8 @@ void stock_t::report_result(double &theRatio, double &theRevenue) {
 			posNum = negNum = 0;
 			MaxRevenue = 0, minRevenue = 0, sumRevenue = 0;
 		}
-        //if (id == 3058)
-        //    cout << "ID: "<< id << "date " << it->date_out << "--" << it->date_in << ", price: " << it->price_out << " - " << it->price_in << ", revenue: " << it->revenue << endl;
+        if (id == 3058)
+            cout << "ID: "<< id << "date " << it->date_out << "--" << it->date_in << ", price: " << it->price_out << " - " << it->price_in << ", revenue: " << it->revenue << endl;
 
 		if (it->revenue > MaxRevenue) {
 			MaxRevenue = it->revenue;
@@ -534,21 +536,44 @@ void stock_t::KDJ_trade_for_id(int id) {
 	}
 }
 int chtest = 0;
+int next_time_buy = 0;
+int next_time_sell = 0;
 bool stock_t::KDJ_decision_buy(int id, int date) {
-    if (chtest< 100) {
-        chtest++;
-    } else {
-        chtest= 0;
-        return true; 
+    double delta_k, delta_d, J; 
+	entity_map &stock_map = data.at(id);
+    entity_t &e = stock_map.at(date);
+    delta_k = e.k - e.kp;
+    delta_d = e.d - e.dp;
+    J = 3*e.k - 2*e.d;
+    if (next_time_buy == 1) {
+        next_time_buy = 0;
+        return true; // buy at this moment;
     }
+
+    // buy condition
+    if (e.kp < e.dp && e.k > e.d )//&& delta_k > 0 && delta_d > 0)
+    {
+        next_time_buy = 1;
+    }
+
+
     return false;
 }
 bool stock_t::KDJ_decision_sell(int id, int date) {
-    if (chtest< 100) {
-        chtest++;
-    } else {
-        chtest= 0;
-        return true; 
+    double delta_k, delta_d, J; 
+	entity_map &stock_map = data.at(id);
+    entity_t &e = stock_map.at(date);
+    delta_k = e.k - e.kp;
+    delta_d = e.d - e.dp;
+    J = 3*e.k - 2*e.d;
+    if (next_time_sell == 1) {
+        next_time_sell = 0;
+        return true; // buy at this moment;
+    }
+    // sell condition
+    if (e.kp > e.dp && e.k < e.d)
+    {
+        next_time_sell = 1;
     }
 
     return false;
@@ -657,6 +682,8 @@ void stock_t::compute_KDJ_for(int id, int t) {
             }
             e.k = k_previous*2/3 + rsv/3;
             e.d = d_previous*2/3 + e.k/3;
+            e.kp = k_previous;
+            e.dp = d_previous;
 
             // find lowest in duration t
         } else {

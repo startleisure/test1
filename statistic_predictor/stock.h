@@ -47,7 +47,7 @@ class stock_t {
 		}
         double open, high, low, close;
 		double g; // (v/hly[0] -1 )*100 
-        double k, d; //, rsv, high9, low9; // KD test
+        double k, d, kp, dp; //, rsv, high9, low9; // KDJ test
 		double revenue;
         int volume;
 		double rsi;
