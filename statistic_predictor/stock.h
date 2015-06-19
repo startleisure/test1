@@ -47,11 +47,13 @@ class stock_t {
 		}
         double open, high, low, close;
 		double g; // (v/hly[0] -1 )*100 
-        double k, d, kp, dp; //, rsv, high9, low9; // KDJ test
+        double k, d, kp, dp, rsv, k_d, k_dd, d_d, d_dd;//, high9, low9; // KDJ test
 		double revenue;
         int volume;
 		double rsi;
-		map<int, double> ma; // ma[30] , ma[72] , ....
+		map<int, double> ma;    // 
+		map<int, double> ma_d;  // 1st order differential of MA[T]
+		map<int, double> ma_dd; // 2nd order differential of MA[T]
 		vector<double> hly; // gravity line hly[0], velocity: hly[1], acceleration: hly[2]
     };
 	struct Trade_t {
@@ -92,10 +94,10 @@ class stock_t {
 	void compute_revenue_for(int id, int date, int t); // revenue at +t days when buy at (id, date)
 
     // KDJ test
-	void KDJ_buy_simulation();
+	void KDJ_trade_simulation();
     void KDJ_trade_for_id(int id);
-    bool KDJ_decision_buy(int id, int date);
-    bool KDJ_decision_sell(int id, int date);
+    bool KDJ_buy_decision(int id, int date);
+    bool KDJ_sell_decision(int id, int date);
 	void compute_KDJ_all();
     void compute_KDJ_for(int id, int t);
 	

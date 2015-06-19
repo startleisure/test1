@@ -6,6 +6,9 @@
 #define STOP_NEG_REVENUE -10
 #define STOP_POS_REVENUE 20
 
+#define TM1 30
+#define DISPLAY_ID 3058
+#define DISPLAY_EN true
 
 
 namespace stock {
@@ -200,10 +203,15 @@ void stock_t::print_data() {
 #else 
 			cout << it->first << setw(5) 
 				 << " C[" 	<< e.close  
+				 << "]\tMA[" << e.ma[TM1]
+				 << "]\tMD[" << e.ma_d[TM1]
+				 << "]\tMDD[" << e.ma_dd[TM1]
 				 << "]\tK[" << e.k
 				 << "]\tD[" << e.d
-				 << "]\tKp[" << e.kp
-				 << "]\tDp[" << e.dp
+				 << "]\tKd[" << e.k_d
+				 << "]\tDd[" << e.d_d
+				 << "]\tKdd[" << e.k_dd
+				 << "]\tDdd[" << e.d_dd
 				 <<"]" << endl;
 
 #endif
@@ -233,14 +241,16 @@ void stock_t::report_result(double &theRatio, double &theRevenue) {
 				cout << "revenue: " << sumRevenue << endl;
                 cout << "TradeNum: " << (negNum + posNum) << endl;
 				cout << "Pos ratio: " << ((double)posNum)/(negNum + posNum) << endl;
+                if (sumRevenue > 0 || posNum > negNum) cout << "View here" << endl;
                 cout << "===================================================" << endl;
 			} 
 			id = it->id;
 			posNum = negNum = 0;
 			MaxRevenue = 0, minRevenue = 0, sumRevenue = 0;
 		}
-        if (id == 3058)
+        if (DISPLAY_EN && id == DISPLAY_ID) {
             cout << "ID: "<< id << ", date " << it->date_in<< "--" << it->date_out<< ", price: " << it->price_in<< " - " << it->price_out << ", revenue: " << it->revenue << endl;
+        }
 
 		if (it->revenue > MaxRevenue) {
 			MaxRevenue = it->revenue;
@@ -492,7 +502,7 @@ void stock_t::compute_rsi_for(int id, int n) {
 	}
 
 }
-void stock_t::KDJ_buy_simulation() {
+void stock_t::KDJ_trade_simulation() {
 	cout << "Trade Simulation" << endl;
 	for (data_map::iterator it = data.begin(); it != data.end(); ++it) {
 		int id = it->first;
@@ -505,17 +515,20 @@ void stock_t::KDJ_trade_for_id(int id) {
 	entity_map &stock_map = data.at(id);
     stock_trade_state state = STOCK_EMPTY;
     int duration = 0;
+    double r = 0.0;
 
     trade.id = id;
     trade.hold_num = 0;
 	for (entity_map::iterator it = stock_map.begin(); it != stock_map.end(); ++it) {
+        entity_map::iterator next = it;
         int date = it->first;
 		entity_t &e = it->second;
         // if Decide to buy , => hold state
+        next ++;
         switch (state){
             case STOCK_EMPTY:
                 // decide whether to buy
-                if (KDJ_decision_buy(id, date) == true) {
+                if (KDJ_buy_decision(id, date) == true) {
                     trade.hold_num = 1;
                     trade.date_in = date;
                     trade.price_in = e.high;
@@ -526,28 +539,36 @@ void stock_t::KDJ_trade_for_id(int id) {
             case STOCK_HOLD:
                 // decide whether to sell
                 duration++;
-                if (KDJ_decision_sell(id, date) == true || duration > 30) {
+                r = 100*(e.low*0.996 - trade.price_in)/trade.price_in;
+                if (KDJ_sell_decision(id, date) == true 
+                    || r < -10.0    // Negative limit
+                    //|| duration > 30 // Hold time limit 
+                    || next == stock_map.end()) 
+                {
                     trade.hold_num = 0;
                     trade.date_out = date;
                     trade.price_out = e.low;
-                    trade.revenue = 100*(trade.price_out*0.996 - trade.price_in)/trade.price_in;
+                    trade.revenue = r;
                     state = STOCK_EMPTY;
                     result_bag.push_back(trade);  //   a trade sell
                 } 
                 break;
         }
 	}
+
 }
 int chtest = 0;
 int next_time_buy = 0;
 int next_time_sell = 0;
-bool stock_t::KDJ_decision_buy(int id, int date) {
-    double delta_k, delta_d, J; 
+bool stock_t::KDJ_buy_decision(int id, int date) {
+    double delta_k, delta_d, delta_ma; 
 	entity_map &stock_map = data.at(id);
     entity_t &e = stock_map.at(date);
     delta_k = e.k - e.kp;
     delta_d = e.d - e.dp;
-    J = 3*e.k - 2*e.d;
+
+    if (e.ma_dd[TM1] < 0) return false;
+
     // buy condition
     switch (next_time_buy) {
         case 0:
@@ -564,27 +585,36 @@ bool stock_t::KDJ_decision_buy(int id, int date) {
             break;
         case 2:
             next_time_buy = 0;
+            //if (id==3058)cout << "buy when " << date << ", delta MA%: " << e.ma_d[TM1] << endl;
             return true; // buy at this moment;
     }
-
-
     return false;
 }
-bool stock_t::KDJ_decision_sell(int id, int date) {
+double upper_shadow;
+bool stock_t::KDJ_sell_decision(int id, int date) {
     double delta_k, delta_d, J; 
 	entity_map &stock_map = data.at(id);
     entity_t &e = stock_map.at(date);
     delta_k = e.k - e.kp;
     delta_d = e.d - e.dp;
+    upper_shadow = upper_shadow*2/3 + (e.high - e.close)*100 / ((e.high + e.low)/2)/3;
     J = 3*e.k - 2*e.d;
+    if (DISPLAY_EN && id == DISPLAY_ID) {
+        cout << "chdebug "<< id << ", date " << date << ", KD: " << e.k << ", " << e.d << ", rsv: "<< e.rsv;
+        cout << ", up_sh: " << upper_shadow << ", MA: " << e.ma[TM1] << ", " << e.ma_d[TM1] << ", " << e.ma_dd[TM1]<< endl;
+    }
     // sell condition
     switch (next_time_sell) {
         case 0:
             if (/*(e.kp < e.dp && e.k < e.d) ||*/
+                (delta_k < 0 )//&& delta_d < 0) ||
+/* 3058 , 37% positve 
                 (e.kp > e.dp && e.k < e.d  && e.k > 70) ||
-                (delta_k < 0 && e.k > 70) ) 
+                (delta_k < 0 && e.k > 70) 
+*/
+                //e.close < e.ma[TM1]*0.90
+            )
             {
-                //cout << "chdebug : " << delta_k << ", " << delta_d << endl;
                 next_time_sell = 1;
             }
             break;
@@ -603,6 +633,7 @@ void stock_t::compute_KDJ_all() {
 	for (data_map::iterator it = data.begin(); it != data.end(); ++it) {
 		int id = it->first;
         compute_KDJ_for(id, 9);
+        compute_ma_for(id, TM1);
     }
 }
 
@@ -670,7 +701,7 @@ void stock_t::compute_KDJ_for(int id, int t) {
         return; 
     }
 
-    double high, low, close, rsv, k_previous, d_previous;
+    double high, low, close, rsv, k_previous, d_previous, k_d_previous, d_d_previous;
 	entity_map &stock_map = data.at(id);
     list<entity_t> list1;
 
@@ -704,6 +735,11 @@ void stock_t::compute_KDJ_for(int id, int t) {
             e.d = d_previous*2/3 + e.k/3;
             e.kp = k_previous;
             e.dp = d_previous;
+            e.k_d = e.k - k_previous;
+            e.d_d = e.d - d_previous;
+            e.k_dd = e.k_d - k_d_previous;
+            e.d_dd = e.d_d - d_d_previous;
+            e.rsv = rsv;
 
             // find lowest in duration t
         } else {
@@ -712,6 +748,8 @@ void stock_t::compute_KDJ_for(int id, int t) {
         }
         k_previous = e.k;
         d_previous = e.d;
+        k_d_previous = e.k_d;
+        d_d_previous = e.d_d;
 	}
 }
 
@@ -720,6 +758,7 @@ void stock_t::compute_ma_for(int id, int t) {
 
 	entity_map &stock_map = data.at(id);
 	double sum = 0;
+    double ma_previous=0, ma_d_previous;
 	queue<double> qued;
 
 	for (entity_map::iterator it = stock_map.begin(); it != stock_map.end(); ++it) {
@@ -730,7 +769,14 @@ void stock_t::compute_ma_for(int id, int t) {
 		} 
 		sum += e.close;
 		qued.push(e.close);
+        // update MA
 		e.ma[t] = sum/qued.size();
+        e.ma_d[t] = e.ma[t] - ma_previous;
+        e.ma_dd[t] = e.ma_d[t] - ma_d_previous;
+
+        // update previous
+        ma_previous = e.ma[t];
+        ma_d_previous = e.ma_d[t];
 	}
 
 } 
