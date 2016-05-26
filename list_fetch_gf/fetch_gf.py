@@ -38,10 +38,10 @@ def get_site( stkID = 2330, month = 1, day = 1, year = 1985, start = 0, num = 30
 #<td class="rgt rm">34,628,000
 
 pattern = r'<td class="lm">(.+)' +  \
-           '\s<td class="rgt">([\d\.]+)' + \
-           '\s<td class="rgt">([\d\.]+)' + \
-           '\s<td class="rgt">([\d\.]+)' + \
-           '\s<td class="rgt">([\d\.]+)' + \
+           '\s<td class="rgt">([\d\.\,]+)' + \
+           '\s<td class="rgt">([\d\.\,]+)' + \
+           '\s<td class="rgt">([\d\.\,]+)' + \
+           '\s<td class="rgt">([\d\.\,]+)' + \
            '\s<td class="rgt rm">([\d\,]+)'
 reg_price = re.compile( pattern )
 
@@ -58,7 +58,7 @@ def write_fetch_data(fileName, stock_id = 0):
 
     match_r_sz = reg_row_size.search( content )
     if (match_r_sz is None):
-        print "stock_id: "+ str(stock_id) + " not found! "
+        print "stock_id: "+ str(stock_id) + " not found1! "
         return None
 
     ## write ID SZ line
@@ -80,7 +80,7 @@ def write_fetch_data(fileName, stock_id = 0):
         stock_data = reg_price.findall( cnt )
         length = len(stock_data)
         if (length is 0 ):
-            print "stock_id: "+ str(stock_id) + " not found! "
+            print "stock_id: "+ str(stock_id) + " not found2! "
             return None
         else:
             print length
@@ -107,8 +107,8 @@ opener.addheaders = [('User-agent', 'Mozilla/5.0')]
 
 #stock_ids = range(9999)
 #stock_ids = (1111, 2330, 2485)
-#stock_ids = data.split()
-stock_ids = range(3000, 3100)
+stock_ids = data.split()
+#stock_ids = range(3000, 3100)
 
 print 'Start Fetch!'
 for stock_id in stock_ids:  # fetch all

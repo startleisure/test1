@@ -38,10 +38,10 @@ def get_site( stkID = 2330, month = 1, day = 1, year = 1985, start = 0, num = 30
 #<td class="rgt rm">34,628,000
 
 pattern = r'<td class="lm">(.+)' +  \
-           '\s<td class="rgt">([\d\.]+)' + \
-           '\s<td class="rgt">([\d\.]+)' + \
-           '\s<td class="rgt">([\d\.]+)' + \
-           '\s<td class="rgt">([\d\.]+)' + \
+           '\s<td class="rgt">([\d\.\,]+)' + \
+           '\s<td class="rgt">([\d\.\,]+)' + \
+           '\s<td class="rgt">([\d\.\,]+)' + \
+           '\s<td class="rgt">([\d\.\,]+)' + \
            '\s<td class="rgt rm">([\d\,]+)'
 reg_price = re.compile( pattern )
 
